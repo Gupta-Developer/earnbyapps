@@ -10,7 +10,11 @@ export default function Header() {
   const { userRole, login, logout, theme, toggleTheme } = useApp();
   const [showAuthDropdown, setShowAuthDropdown] = useState(false);
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/partner')) {
+  // Hide global navbar on dashboard pages ONLY IF the user has access to them.
+  // If access is denied (wrong role), show the navbar so they can switch roles.
+  const hasAdminAccess = pathname.startsWith('/admin') && userRole === 'admin';
+  const hasPartnerAccess = pathname.startsWith('/partner') && userRole === 'user';
+  if (hasAdminAccess || hasPartnerAccess) {
     return null;
   }
 
