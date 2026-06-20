@@ -329,72 +329,73 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         /* Bottom Navigation (Mobile) */
         .partner-bottom-nav {
           display: none;
-          background: var(--bg-card);
-          border-top: 1px solid var(--border-color);
-          height: 64px;
-          flex-shrink: 0;
-          box-sizing: border-box;
-          z-index: 100;
-          box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
-          transition: background-color 0.2s, border-color 0.2s;
-        }
-        .bottom-nav-list {
-          display: flex;
-          height: 100%;
-          width: 100%;
-          justify-content: space-around;
-          align-items: center;
-          padding: 0 4px;
-        }
-        .bottom-nav-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          flex: 1;
-          height: 100%;
-          text-decoration: none;
-          color: var(--text-secondary);
-          transition: all 0.2s ease;
-          gap: 4px;
-        }
-        .bottom-nav-item.active {
-          color: var(--accent-indigo);
-          font-weight: 600;
-        }
-        .bottom-nav-icon {
-          font-size: 1.25rem;
-          transition: transform 0.2s ease;
-        }
-        .bottom-nav-item:active .bottom-nav-icon {
-          transform: scale(0.85);
-        }
-        .bottom-nav-label {
-          font-size: 0.65rem;
-          font-weight: 500;
-          letter-spacing: 0.01em;
-          text-align: center;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 60px;
         }
 
         @media (max-width: 768px) {
-          .partner-portal-root {
-            flex-direction: column;
-          }
           .partner-nav-sidebar {
             display: none !important;
           }
           .partner-bottom-nav {
-            display: block;
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            z-index: 9999;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+            box-sizing: border-box;
+          }
+          .bottom-nav-list {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 4px;
+          }
+          .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            height: 100%;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            gap: 4px;
+          }
+          .bottom-nav-item.active {
+            color: var(--accent-indigo);
+            font-weight: 600;
+          }
+          .bottom-nav-icon {
+            font-size: 1.25rem;
+            transition: transform 0.2s ease;
+          }
+          .bottom-nav-item:active .bottom-nav-icon {
+            transform: scale(0.85);
+          }
+          .bottom-nav-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60px;
           }
           .viewport-header-bar {
             padding: 16px;
           }
           .viewport-scrollable-content {
-            padding: 16px;
+            padding: 16px 16px 80px 16px !important;
           }
         }
       `}</style>
