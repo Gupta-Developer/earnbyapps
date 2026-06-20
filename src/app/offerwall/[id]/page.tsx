@@ -94,16 +94,17 @@ export default function TaskDetails({ params }: PageProps) {
             <div className="header-left">
               <div className="app-category-badge">{app.category}</div>
               <h1 className="detail-app-title">{app.name}</h1>
-              <div className="meta-stats-row">
+              <div className="meta-stats-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
                 <span>Rating: <strong className="highlight-amber">★ {app.rating}</strong></span>
                 <span>Category Difficulty: <strong>{app.difficulty}</strong></span>
+                <span>Target Regions: <strong style={{ color: 'var(--accent-teal)' }}>🌍 {app.targetCountry || 'Global'} ({app.currency || 'USD'})</strong></span>
               </div>
             </div>
             
             <div className="header-right">
               <span className="est-earning-lbl">Est. Payout</span>
               <strong className="est-earning-val">
-                {app.earningRate.startsWith('$') ? '₹ ' + (parseFloat(app.earningRate.replace(/[^0-9.]/g, '')) * 80).toFixed(0) : app.earningRate}
+                {app.earningRate}
               </strong>
             </div>
           </div>
@@ -135,7 +136,9 @@ export default function TaskDetails({ params }: PageProps) {
                         <p className="task-card-desc">{task.description}</p>
                       </div>
                       <div className="task-card-action">
-                        <span className="task-card-reward">+₹ {(task.reward * 80).toFixed(0)}</span>
+                        <span className="task-card-reward">
+                          {app.currencySymbol ? `+${app.currencySymbol} ${task.reward.toFixed(2)}` : `+₹ ${(task.reward * 80).toFixed(0)}`}
+                        </span>
                         <button
                           disabled={isCompleted}
                           onClick={() => handleStartTask(task)}

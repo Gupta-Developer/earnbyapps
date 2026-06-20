@@ -8,7 +8,7 @@ export interface AppTask {
 export interface EarningApp {
   id: string;
   name: string;
-  category: 'Gaming' | 'Surveys' | 'App Testing' | 'Passive';
+  category: 'Gaming' | 'Surveys' | 'App Testing' | 'Passive' | 'App Install & Sign Up' | 'LinkedIn Followers' | 'Google Maps Reviews' | 'Telegram Members' | 'WhatsApp Members' | 'Instagram Followers' | 'Facebook Page Followers' | 'Youtube Subscribers' | 'Trustpilot Reviews' | 'Justdial Reviews' | 'Play Store Reviews' | 'Custom Task';
   platforms: ('iOS' | 'Android' | 'Web')[];
   earningRate: string; // e.g., "$12.50/hr"
   averageEarningsPerDay: number; // for calculator, e.g. 15
@@ -22,6 +22,9 @@ export interface EarningApp {
   actionText: string;
   externalUrl?: string;
   tasks: AppTask[];
+  targetCountry?: string;
+  currency?: string;
+  currencySymbol?: string;
 }
 
 export const EARNING_APPS: EarningApp[] = [

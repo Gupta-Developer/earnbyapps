@@ -48,8 +48,16 @@ const INITIAL_USERS: RegisteredUser[] = [
   }
 ];
 
+const COUNTRY_CURRENCIES: Record<string, { currency: string; symbol: string }> = {
+  'Global': { currency: 'USD', symbol: '$' },
+  'India': { currency: 'INR', symbol: '₹' },
+  'United States': { currency: 'USD', symbol: '$' },
+  'United Kingdom': { currency: 'GBP', symbol: '£' },
+  'Europe': { currency: 'EUR', symbol: '€' }
+};
+
 export default function AdminDashboard() {
-  const { userRole, pendingApps, apps, approveOffer, rejectOffer, submitOffer } = useApp();
+  const { userRole, pendingApps, apps, approveOffer, rejectOffer, submitOffer, partnershipLeads, updateLeadStatus } = useApp();
   
   // Tab control
   const [activeTab, setActiveTab] = useState<string>('Overview');
@@ -74,7 +82,13 @@ export default function AdminDashboard() {
   const [selectedCountry, setSelectedCountry] = useState('All Countries');
 
   // Moderation state
-  const [selectedPendingId, setSelectedPendingId] = useState<string | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+
+  // Admin Task Builder States
+  const [adminTasks, setAdminTasks] = useState<{ id: string; title: string; description: string; reward: number }[]>([]);
+  const [adminTaskTitle, setAdminTaskTitle] = useState('');
+  const [adminTaskDesc, setAdminTaskDesc] = useState('');
+  const [adminTaskReward, setAdminTaskReward] = useState<number>(0.25);
 
   // New states for B2B sub-pages
   const [deactivatedIds, setDeactivatedIds] = useState<string[]>([]);
@@ -125,13 +139,33 @@ export default function AdminDashboard() {
 
   // Direct campaign creator form states (for admins to skip approval)
   const [adminAppName, setAdminAppName] = useState('');
-  const [adminAppCategory, setAdminAppCategory] = useState<'Gaming' | 'Surveys' | 'App Testing' | 'Passive'>('Gaming');
+  const [adminAppCategory, setAdminAppCategory] = useState<'Gaming' | 'Surveys' | 'App Testing' | 'Passive' | 'App Install & Sign Up' | 'LinkedIn Followers' | 'Google Maps Reviews' | 'Telegram Members' | 'WhatsApp Members' | 'Instagram Followers' | 'Facebook Page Followers' | 'Youtube Subscribers' | 'Trustpilot Reviews' | 'Justdial Reviews' | 'Play Store Reviews' | 'Custom Task'>('Gaming');
   const [adminAppPlatforms, setAdminAppPlatforms] = useState<('iOS' | 'Android' | 'Web')[]>([]);
   const [adminAppUrl, setAdminAppUrl] = useState('');
   const [adminAppRate, setAdminAppRate] = useState('0.50');
   const [adminAppDesc, setAdminAppDesc] = useState('');
   const [adminAppLongDesc, setAdminAppLongDesc] = useState('');
   const [adminAppSuccess, setAdminAppSuccess] = useState(false);
+  const [adminAppCountry, setAdminAppCountry] = useState('Global');
+
+  const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+    'App Install & Sign Up': 'Get Genuine Users On Your App from India. High Value Users',
+    'LinkedIn Followers': 'Get Genuine Active LinkedIn Followers from India',
+    'Google Maps Reviews': 'Get 5 Star Reviews On Your GMB Profile (⚠️Facing Dropping)',
+    'Telegram Members': 'Get Real Active Indian Telegram Users On Your Telegram Channel',
+    'WhatsApp Members': 'Get Real Active Indian WhatsApp Users On Your WhatsApp Channel',
+    'Instagram Followers': 'Get Real Active Indian Followers On Your Profile',
+    'Facebook Page Followers': 'Get Page Likes & Real Followers from India',
+    'Youtube Subscribers': 'Get Genuine Youtube Subscribers from India',
+    'Trustpilot Reviews': 'Get 5 Star Reviews On Your Business\'s Trustpilot Profile',
+    'Justdial Reviews': 'Get 5 Star Reviews On Your Business\'s Justdial Profile',
+    'Play Store Reviews': 'Get 5 Star Positive Reviews On Your App',
+    'Custom Task': 'Get Your Gigs Completed With Our Platform Users',
+    'Gaming': 'Complete in-game actions, download and play to earn.',
+    'Surveys': 'Share your feedback, answer daily opinion polls to earn.',
+    'App Testing': 'Test beta versions of apps and write UI feedback reviews.',
+    'Passive': 'Earn passive income in the background automatically.'
+  };
 
   // Filter users list based on search/filters
   const filteredUsers = useMemo(() => {
@@ -198,6 +232,25 @@ export default function AdminDashboard() {
     setNewBlogContent('');
   };
 
+  const handleAdminAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminTaskTitle) return;
+    const newTask = {
+      id: `task-admin-${Date.now()}-${adminTasks.length}`,
+      title: adminTaskTitle,
+      description: adminTaskDesc,
+      reward: adminTaskReward
+    };
+    setAdminTasks([...adminTasks, newTask]);
+    setAdminTaskTitle('');
+    setAdminTaskDesc('');
+    setAdminTaskReward(0.25);
+  };
+
+  const handleAdminRemoveTask = (id: string) => {
+    setAdminTasks(adminTasks.filter(t => t.id !== id));
+  };
+
   const handleDirectAddCampaign = (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminAppName || !adminAppUrl || adminAppPlatforms.length === 0 || !adminAppDesc) {
@@ -206,7 +259,8 @@ export default function AdminDashboard() {
     }
 
     const costNum = parseFloat(adminAppRate) || 0.50;
-    const rateString = `$${costNum.toFixed(2)} / action`;
+    const symbol = COUNTRY_CURRENCIES[adminAppCountry]?.symbol || '$';
+    const rateString = `${symbol}${costNum.toFixed(2)} / action`;
 
     submitOffer({
       name: adminAppName,
@@ -219,9 +273,12 @@ export default function AdminDashboard() {
       tags: ['Admin direct', 'Promoted'],
       actionText: `Launch ${adminAppName}`,
       externalUrl: adminAppUrl,
-      tasks: [
+      tasks: adminTasks.length > 0 ? adminTasks : [
         { id: `task-admin-${Date.now()}`, title: 'Complete registration', description: 'Download and create verified account.', reward: costNum }
-      ]
+      ],
+      targetCountry: adminAppCountry,
+      currency: COUNTRY_CURRENCIES[adminAppCountry]?.currency || 'USD',
+      currencySymbol: symbol
     });
 
     setAdminAppSuccess(true);
@@ -235,7 +292,9 @@ export default function AdminDashboard() {
     setAdminAppRate('0.50');
     setAdminAppDesc('');
     setAdminAppLongDesc('');
+    setAdminTasks([]);
     setAdminAppSuccess(false);
+    setAdminAppCountry('Global');
   };
 
   const toggleAdminPlatform = (plat: 'iOS' | 'Android' | 'Web') => {
@@ -300,7 +359,7 @@ export default function AdminDashboard() {
     );
   }
 
-  const selectedPendingApp = pendingApps.find(app => app.id === selectedPendingId);
+  const selectedLead = partnershipLeads.find(lead => lead.id === selectedLeadId);
 
   // Sidebar Menu items list matching mockup
   const menuItems = [
@@ -308,7 +367,7 @@ export default function AdminDashboard() {
     { id: 'Analytics', label: 'Analytics', icon: '📊' },
     { id: 'New Campaign', label: 'New Campaign', icon: '➕' },
     { id: 'All Campaigns', label: 'All Campaigns', icon: '📁' },
-    { id: 'Per Campaign Submissions', label: 'Per Campaign Submissions', icon: '📝' },
+    { id: 'New Leads for Partnership', label: 'New Leads for Partnership', icon: '📝' },
     { id: 'All Submissions', label: 'All Submissions', icon: '✔️' },
     { id: 'Manage Users', label: 'Manage Users', icon: '👤' },
     { id: 'Wallet', label: 'Wallet', icon: '💼' },
@@ -385,9 +444,9 @@ export default function AdminDashboard() {
                   <span className="mini-change">Running offers</span>
                 </div>
                 <div className="analytics-mini-card">
-                  <span className="mini-lbl">Moderation Queue</span>
-                  <strong className="mini-val">{pendingApps.length}</strong>
-                  <span className="mini-change">{pendingApps.length > 0 ? '⚠️ Review pending' : '✓ Clean queue'}</span>
+                  <span className="mini-lbl">Partnership Leads</span>
+                  <strong className="mini-val">{partnershipLeads.filter(l => l.status === 'New').length}</strong>
+                  <span className="mini-change">{partnershipLeads.filter(l => l.status === 'New').length > 0 ? '⚠️ New leads review' : '✓ Clean queue'}</span>
                 </div>
                 <div className="analytics-mini-card">
                   <span className="mini-lbl">UPI Withdrawal Queue</span>
@@ -438,8 +497,8 @@ export default function AdminDashboard() {
                 <div className="admin-content-card" style={{ padding: '24px' }}>
                   <h3 className="card-heading" style={{ fontSize: '1.1rem', marginBottom: '16px' }}>Quick Actions</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <button onClick={() => setActiveTab('Per Campaign Submissions')} className="glow-btn-cyan" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textAlign: 'left' }}>
-                      ⏳ Moderate Submissions ({pendingApps.length})
+                    <button onClick={() => setActiveTab('New Leads for Partnership')} className="glow-btn-cyan" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textAlign: 'left' }}>
+                      ⏳ New Leads for Partnership ({partnershipLeads.filter(l => l.status === 'New').length})
                     </button>
                     <button onClick={() => setActiveTab('Wallet')} className="glow-btn-purple" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textAlign: 'left' }}>
                       💸 Process User Withdrawals
@@ -580,9 +639,26 @@ export default function AdminDashboard() {
                       <label>Category *</label>
                       <select 
                         value={adminAppCategory} 
-                        onChange={(e) => setAdminAppCategory(e.target.value as any)}
+                        onChange={(e) => {
+                          const newCat = e.target.value as any;
+                          setAdminAppCategory(newCat);
+                          const autoDesc = CATEGORY_DESCRIPTIONS[newCat];
+                          if (autoDesc) setAdminAppDesc(autoDesc);
+                        }}
                         style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
                       >
+                        <option value="App Install & Sign Up">App Install & Sign Up</option>
+                        <option value="LinkedIn Followers">LinkedIn Followers</option>
+                        <option value="Google Maps Reviews">Google Maps Reviews</option>
+                        <option value="Telegram Members">Telegram Members</option>
+                        <option value="WhatsApp Members">WhatsApp Members</option>
+                        <option value="Instagram Followers">Instagram Followers</option>
+                        <option value="Facebook Page Followers">Facebook Page Followers</option>
+                        <option value="Youtube Subscribers">Youtube Subscribers</option>
+                        <option value="Trustpilot Reviews">Trustpilot Reviews</option>
+                        <option value="Justdial Reviews">Justdial Reviews</option>
+                        <option value="Play Store Reviews">Play Store Reviews</option>
+                        <option value="Custom Task">Custom Task</option>
                         <option value="Gaming">Gaming</option>
                         <option value="Surveys">Surveys</option>
                         <option value="App Testing">App Testing</option>
@@ -591,7 +667,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="form-group">
-                      <label>Payout Per Action ($ USD) *</label>
+                      <label>Payout Per Action ({COUNTRY_CURRENCIES[adminAppCountry]?.currency || 'USD'} {COUNTRY_CURRENCIES[adminAppCountry]?.symbol || '$'}) *</label>
                       <input 
                         type="number" 
                         step="0.05"
@@ -640,6 +716,19 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="form-group">
+                    <label>Target Country *</label>
+                    <select 
+                      value={adminAppCountry} 
+                      onChange={(e) => setAdminAppCountry(e.target.value)}
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
+                    >
+                      {Object.keys(COUNTRY_CURRENCIES).map(country => (
+                        <option key={country} value={country}>{country} ({COUNTRY_CURRENCIES[country].currency} - {COUNTRY_CURRENCIES[country].symbol})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
                     <label>Short Description *</label>
                     <input 
                       type="text" 
@@ -651,8 +740,72 @@ export default function AdminDashboard() {
                     />
                   </div>
 
-                  <button type="submit" className="glow-btn-cyan" style={{ padding: '12px 24px', width: '100%' }}>
-                    Publish to Submissions Queue
+                  {/* ADMIN TASK LIST BUILDER */}
+                  <div className="form-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginTop: '20px' }}>
+                    <h3 style={{ fontSize: '1rem', fontFamily: 'var(--font-display)', marginBottom: '8px', color: 'var(--accent-indigo)' }}>Configure Active Actions/Tasks</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>Define direct sub-tasks earners will complete to get rewards.</p>
+
+                    <div className="added-tasks-container" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                      {adminTasks.length > 0 ? (
+                        adminTasks.map((task, idx) => (
+                          <div key={task.id} className="task-preview-chip" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px' }}>
+                            <div>
+                              <strong style={{ fontSize: '0.88rem' }}>{idx + 1}. {task.title}</strong>
+                              <span style={{ marginLeft: '8px', color: 'var(--accent-emerald)', fontWeight: 'bold', fontSize: '0.85rem' }}>+{COUNTRY_CURRENCIES[adminAppCountry]?.symbol || '$'}{task.reward.toFixed(2)}</span>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{task.description}</p>
+                            </div>
+                            <button type="button" onClick={() => handleAdminRemoveTask(task.id)} className="remove-task-btn" style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem' }}>✕</button>
+                          </div>
+                        ))
+                      ) : (
+                        <p style={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--text-muted)' }}>No actions added yet. Add at least one task action below.</p>
+                      )}
+                    </div>
+
+                    <div className="glass-card task-builder-subform" style={{ padding: '16px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-color)', borderRadius: '6px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem' }}>Add Live Campaign Action</h4>
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Action Title</label>
+                        <input 
+                          type="text" 
+                          value={adminTaskTitle} 
+                          onChange={(e) => setAdminTaskTitle(e.target.value)}
+                          placeholder="e.g. Download and play for 10 minutes"
+                          style={{ padding: '8px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                        />
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+                        <div className="form-group">
+                          <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Action Description</label>
+                          <input 
+                            type="text" 
+                            value={adminTaskDesc} 
+                            onChange={(e) => setAdminTaskDesc(e.target.value)}
+                            placeholder="e.g. Accounts must be unique."
+                            style={{ padding: '8px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Reward ({COUNTRY_CURRENCIES[adminAppCountry]?.currency || 'USD'} {COUNTRY_CURRENCIES[adminAppCountry]?.symbol || '$'})</label>
+                          <input 
+                            type="number" 
+                            step="0.05"
+                            value={adminTaskReward} 
+                            onChange={(e) => setAdminTaskReward(parseFloat(e.target.value) || 0)}
+                            style={{ padding: '8px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                          />
+                        </div>
+                      </div>
+
+                      <button type="button" onClick={handleAdminAddTask} className="glow-btn-cyan" style={{ padding: '6px 12px', fontSize: '0.8rem', alignSelf: 'flex-start' }}>
+                        + Add Action
+                      </button>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="glow-btn-cyan" style={{ padding: '12px 24px', width: '100%', marginTop: '20px' }}>
+                    Publish Campaign to Offerwall
                   </button>
                 </form>
               )}
@@ -736,41 +889,57 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* 5. PER CAMPAIGN SUBMISSIONS VIEW (Original moderations block) */}
-          {activeTab === 'Per Campaign Submissions' && (
+          {/* 5. NEW LEADS FOR PARTNERSHIP TAB VIEW */}
+          {activeTab === 'New Leads for Partnership' && (
             <div className="admin-moderation-layout">
               <div className="submissions-panel">
                 <div className="card-header-section">
-                  <h2 className="card-heading">Pending Campaigns Approval ({pendingApps.length})</h2>
-                  <p className="card-subheading">Moderation queue for user-submitted growth offers.</p>
+                  <h2 className="card-heading">Partnership Leads ({partnershipLeads.length})</h2>
+                  <p className="card-subheading">Review proposed campaigns submitted by standard users for partnership.</p>
                 </div>
 
                 <div className="pending-moderation-list">
-                  {pendingApps.length > 0 ? (
-                    pendingApps.map((app) => (
+                  {partnershipLeads.length > 0 ? (
+                    partnershipLeads.map((lead) => (
                       <div 
-                        key={app.id}
-                        onClick={() => setSelectedPendingId(app.id)}
-                        className={`pending-item-card ${selectedPendingId === app.id ? 'active' : ''}`}
+                        key={lead.id}
+                        onClick={() => setSelectedLeadId(lead.id)}
+                        className={`pending-item-card ${selectedLeadId === lead.id ? 'active' : ''}`}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <strong style={{ display: 'block', fontSize: '1rem' }}>{app.name}</strong>
-                            <span className="app-cat-badge">{app.category}</span>
+                            <strong style={{ display: 'block', fontSize: '1rem' }}>{lead.appName}</strong>
+                            <span className="app-cat-badge">{lead.category}</span>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              fontWeight: 'bold',
+                              marginLeft: '8px',
+                              background: 
+                                lead.status === 'New' ? 'rgba(245,158,11,0.1)' : 
+                                lead.status === 'Contacted' ? 'rgba(59,130,246,0.1)' :
+                                lead.status === 'Converted' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                              color: 
+                                lead.status === 'New' ? '#f59e0b' : 
+                                lead.status === 'Contacted' ? '#3b82f6' :
+                                lead.status === 'Converted' ? 'var(--accent-emerald)' : '#ef4444'
+                            }}>{lead.status}</span>
                           </div>
-                          <span style={{ color: 'var(--accent-emerald)', fontWeight: 700 }}>{app.earningRate}</span>
+                          <span style={{ color: 'var(--accent-emerald)', fontWeight: 700 }}>{lead.earningRate}</span>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="empty-pending-banner">
                       <span>✓</span>
-                      <p>All clean! There are no pending apps awaiting review.</p>
+                      <p>All clean! There are no partnership leads registered.</p>
                     </div>
                   )}
                 </div>
 
-                <h2 className="card-heading" style={{ marginTop: '36px', fontSize: '1.2rem' }}>Active Campaigns ({apps.length})</h2>
+                <h2 className="card-heading" style={{ marginTop: '36px', fontSize: '1.2rem' }}>Active Live Campaigns ({apps.length})</h2>
                 <div className="active-list-container">
                   {apps.map((app) => (
                     <div key={app.id} className="active-campaign-row">
@@ -786,50 +955,82 @@ export default function AdminDashboard() {
 
               {/* Inspector panel */}
               <div className="inspector-panel">
-                {selectedPendingApp ? (
+                {selectedLead ? (
                   <div className="glass-card inspector-content-card">
-                    <h3 className="inspector-title">Campaign Parameters</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <h3 className="inspector-title" style={{ margin: 0 }}>Lead Parameters</h3>
+                      <span style={{
+                        fontSize: '0.78rem',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontWeight: 'bold',
+                        background: 
+                          selectedLead.status === 'New' ? 'rgba(245,158,11,0.1)' : 
+                          selectedLead.status === 'Contacted' ? 'rgba(59,130,246,0.1)' :
+                          selectedLead.status === 'Converted' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                        color: 
+                          selectedLead.status === 'New' ? '#f59e0b' : 
+                          selectedLead.status === 'Contacted' ? '#3b82f6' :
+                          selectedLead.status === 'Converted' ? 'var(--accent-emerald)' : '#ef4444'
+                      }}>{selectedLead.status}</span>
+                    </div>
                     
                     <div className="meta-details-grid">
                       <div>
                         <span className="meta-lbl">App Name</span>
-                        <strong className="meta-val">{selectedPendingApp.name}</strong>
+                        <strong className="meta-val">{selectedLead.appName}</strong>
                       </div>
                       <div>
                         <span className="meta-lbl">Category</span>
-                        <strong className="meta-val">{selectedPendingApp.category}</strong>
+                        <strong className="meta-val">{selectedLead.category}</strong>
                       </div>
                       <div>
                         <span className="meta-lbl">Earning Metric</span>
-                        <strong className="meta-val">{selectedPendingApp.earningRate}</strong>
+                        <strong className="meta-val">{selectedLead.earningRate}</strong>
                       </div>
                       <div>
                         <span className="meta-lbl">Platforms</span>
-                        <strong className="meta-val">{selectedPendingApp.platforms.join(', ')}</strong>
+                        <strong className="meta-val">{selectedLead.platforms.join(', ')}</strong>
+                      </div>
+                      <div>
+                        <span className="meta-lbl">Partner Name</span>
+                        <strong className="meta-val">{selectedLead.partnerName}</strong>
+                      </div>
+                      <div>
+                        <span className="meta-lbl">Partner Email</span>
+                        <strong className="meta-val">{selectedLead.partnerEmail}</strong>
+                      </div>
+                      <div>
+                        <span className="meta-lbl">Target Completions</span>
+                        <strong className="meta-val">{selectedLead.targetCompletions.toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span className="meta-lbl">Budget Sizing</span>
+                        <strong className="meta-val" style={{ color: 'var(--accent-emerald)' }}>${selectedLead.totalBudget.toFixed(2)}</strong>
                       </div>
                       <div style={{ gridColumn: 'span 2' }}>
                         <span className="meta-lbl">Redirect Link</span>
-                        <a href={selectedPendingApp.externalUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-indigo)', fontSize: '0.85rem', wordBreak: 'break-all' }}>
-                          {selectedPendingApp.externalUrl} ↗
+                        <a href={selectedLead.externalUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-indigo)', fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                          {selectedLead.externalUrl} ↗
                         </a>
                       </div>
                     </div>
 
                     <div className="inspector-field">
                       <span className="meta-lbl">Short Description</span>
-                      <p className="field-text">{selectedPendingApp.description}</p>
+                      <p className="field-text">{selectedLead.description}</p>
                     </div>
 
                     <div className="inspector-field">
                       <span className="meta-lbl">Detailed Overview</span>
-                      <p className="field-text" style={{ whiteSpace: 'pre-wrap' }}>{selectedPendingApp.longDescription}</p>
+                      <p className="field-text" style={{ whiteSpace: 'pre-wrap' }}>{selectedLead.longDescription}</p>
                     </div>
 
                     <div className="inspector-field">
-                      <span className="meta-lbl">Configured Tasks ({selectedPendingApp.tasks?.length || 0})</span>
+                      <span className="meta-lbl">Suggested Tasks ({selectedLead.suggestedTasks?.length || 0})</span>
                       <div className="tasks-scroll-list">
-                        {selectedPendingApp.tasks && selectedPendingApp.tasks.length > 0 ? (
-                          selectedPendingApp.tasks.map((task, idx) => (
+                        {selectedLead.suggestedTasks && selectedLead.suggestedTasks.length > 0 ? (
+                          selectedLead.suggestedTasks.map((task, idx) => (
                             <div key={task.id} className="task-sub-card">
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '0.85rem' }}>
                                 <span>{idx + 1}. {task.title}</span>
@@ -839,31 +1040,48 @@ export default function AdminDashboard() {
                             </div>
                           ))
                         ) : (
-                          <p style={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--text-muted)' }}>No tasks registered.</p>
+                          <p style={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--text-muted)' }}>No suggested tasks.</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="inspector-action-buttons">
-                      <button 
-                        onClick={() => { approveOffer(selectedPendingApp.id); setSelectedPendingId(null); }}
-                        className="glow-btn-cyan"
-                        style={{ flex: 1, padding: '12px' }}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+                      <a 
+                        href={`mailto:${selectedLead.partnerEmail}?subject=Partnership Proposal for ${selectedLead.appName}`}
+                        className="glow-btn-purple"
+                        style={{ display: 'block', textAlign: 'center', textDecoration: 'none', padding: '12px', borderRadius: '6px', fontSize: '0.9rem', fontWeight: 600 }}
                       >
-                        Approve Campaign
-                      </button>
-                      <button 
-                        onClick={() => { rejectOffer(selectedPendingApp.id); setSelectedPendingId(null); }}
-                        className="reject-moderation-btn"
-                      >
-                        Reject
-                      </button>
+                        📧 Connect with Partner
+                      </a>
+                      <div className="inspector-action-buttons" style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                          onClick={() => updateLeadStatus(selectedLead.id, 'Contacted')}
+                          className="glow-btn-cyan"
+                          style={{ flex: 1, padding: '10px' }}
+                        >
+                          Mark Contacted
+                        </button>
+                        <button 
+                          onClick={() => updateLeadStatus(selectedLead.id, 'Converted')}
+                          className="glow-btn-cyan"
+                          style={{ flex: 1, padding: '10px', background: 'var(--accent-emerald)', color: 'black' }}
+                        >
+                          Mark Converted
+                        </button>
+                        <button 
+                          onClick={() => updateLeadStatus(selectedLead.id, 'Declined')}
+                          className="reject-moderation-btn"
+                          style={{ padding: '10px' }}
+                        >
+                          Decline
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <div className="glass-card empty-inspector-banner">
                     <span>🔍</span>
-                    <p>Select a pending campaign listing to inspect details, verify links, and moderate.</p>
+                    <p>Select a partnership lead to view contact details, suggested tasks, and manage outreach status.</p>
                   </div>
                 )}
               </div>

@@ -1,8 +1,12 @@
 "use client";
 
 import React from 'react';
+import { useApp } from '../../../context/AppContext';
 
 export default function PartnerOverview() {
+  const { partnershipLeads } = useApp();
+  const pendingCount = partnershipLeads.filter(l => l.status === 'New').length;
+
   return (
     <div className="partner-content-card">
       <div className="card-header-section">
@@ -28,7 +32,7 @@ export default function PartnerOverview() {
         </div>
         <div className="analytics-mini-card">
           <span className="mini-lbl">Pending Review</span>
-          <strong className="mini-val">1</strong>
+          <strong className="mini-val">{pendingCount}</strong>
           <span className="mini-change">Awaiting moderation</span>
         </div>
       </div>

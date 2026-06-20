@@ -4,14 +4,21 @@ import React from 'react';
 import { useApp } from '../../../context/AppContext';
 
 export default function PartnerTasks() {
-  const { apps } = useApp();
+  const { partnershipLeads } = useApp();
 
-  // Mock list of partner submissions including some directory matches
+  // Combine static mock campaigns with dynamic partnership leads
   const partnerCampaigns = [
     { id: 'part-c-1', name: 'Mistplay Partner Campaign', target: 2000, completed: 890, cost: 0.50, status: 'Active' },
     { id: 'part-c-2', name: 'Prime Opinion Surveys B2B', target: 3000, completed: 1560, cost: 0.75, status: 'Active' },
     { id: 'part-c-3', name: 'Swagbucks Premium Trial', target: 500, completed: 500, cost: 1.20, status: 'Completed' },
-    { id: 'part-c-4', name: 'TestAppPro (Awaiting Sync)', target: 1200, completed: 0, cost: 0.75, status: 'Pending Review' }
+    ...partnershipLeads.map(lead => ({
+      id: lead.id,
+      name: `${lead.appName} (Proposal)`,
+      target: lead.targetCompletions,
+      completed: lead.status === 'Converted' ? Math.floor(lead.targetCompletions * 0.12) : 0,
+      cost: lead.costPerCompletion,
+      status: lead.status === 'Converted' ? 'Active' : lead.status
+    }))
   ];
 
   return (
@@ -64,10 +71,14 @@ export default function PartnerTasks() {
                       fontWeight: 'bold',
                       background: 
                         camp.status === 'Active' ? 'rgba(16,185,129,0.1)' : 
-                        camp.status === 'Completed' ? 'rgba(79,70,229,0.1)' : 'rgba(245,158,11,0.1)',
+                        camp.status === 'Completed' ? 'rgba(79,70,229,0.1)' :
+                        camp.status === 'Contacted' ? 'rgba(59,130,246,0.1)' :
+                        camp.status === 'Declined' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
                       color: 
                         camp.status === 'Active' ? 'var(--accent-emerald)' : 
-                        camp.status === 'Completed' ? 'var(--accent-indigo)' : '#f59e0b'
+                        camp.status === 'Completed' ? 'var(--accent-indigo)' :
+                        camp.status === 'Contacted' ? '#3b82f6' :
+                        camp.status === 'Declined' ? '#ef4444' : '#f59e0b'
                     }}>
                       {camp.status}
                     </span>

@@ -70,6 +70,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   const sidebarItems = [
     { id: 'overview', href: '/partner/overview', label: 'Overview', icon: '🏠' },
     { id: 'my-tasks', href: '/partner/my-tasks', label: 'My Tasks', icon: '📋' },
+    { id: 'assigned-campaigns', href: '/partner/assigned-campaigns', label: 'Assigned Campaigns', icon: '🎯' },
     { id: 'create-campaign', href: '/partner/create-campaign', label: 'Create Campaign', icon: '➕' },
     { id: 'platforms', href: '/partner/platforms', label: 'Platforms', icon: '📱' },
     { id: 'help-center', href: '/partner/help-center', label: 'Help Center', icon: '❓' }
@@ -78,6 +79,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   const activeTitle = 
     pathname.includes('/create-campaign') ? 'Create Campaign' : 
     pathname.includes('/my-tasks') ? 'My Tasks' : 
+    pathname.includes('/assigned-campaigns') ? 'Assigned Campaigns' :
     pathname.includes('/platforms') ? 'Platforms' : 
     pathname.includes('/help-center') ? 'Help Center' : 'Overview';
 
@@ -136,6 +138,26 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           {children}
         </div>
       </div>
+
+      {/* 3. Bottom Navigation Bar (Mobile only) */}
+      <nav className="partner-bottom-nav">
+        <div className="bottom-nav-list">
+          {sidebarItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={`bottom-nav-item ${isActive ? 'active' : ''}`}
+                style={{ textDecoration: 'none' }}
+              >
+                <span className="bottom-nav-icon">{item.icon}</span>
+                <span className="bottom-nav-label">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
       <style>{`
         .partner-portal-root {
@@ -304,25 +326,75 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           padding: 32px;
         }
 
+        /* Bottom Navigation (Mobile) */
+        .partner-bottom-nav {
+          display: none;
+          background: var(--bg-card);
+          border-top: 1px solid var(--border-color);
+          height: 64px;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          z-index: 100;
+          box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+          transition: background-color 0.2s, border-color 0.2s;
+        }
+        .bottom-nav-list {
+          display: flex;
+          height: 100%;
+          width: 100%;
+          justify-content: space-around;
+          align-items: center;
+          padding: 0 4px;
+        }
+        .bottom-nav-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex: 1;
+          height: 100%;
+          text-decoration: none;
+          color: var(--text-secondary);
+          transition: all 0.2s ease;
+          gap: 4px;
+        }
+        .bottom-nav-item.active {
+          color: var(--accent-indigo);
+          font-weight: 600;
+        }
+        .bottom-nav-icon {
+          font-size: 1.25rem;
+          transition: transform 0.2s ease;
+        }
+        .bottom-nav-item:active .bottom-nav-icon {
+          transform: scale(0.85);
+        }
+        .bottom-nav-label {
+          font-size: 0.65rem;
+          font-weight: 500;
+          letter-spacing: 0.01em;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 60px;
+        }
+
         @media (max-width: 768px) {
+          .partner-portal-root {
+            flex-direction: column;
+          }
           .partner-nav-sidebar {
-            width: 70px !important;
-          }
-          .partner-nav-sidebar .menu-item-lbl,
-          .partner-nav-sidebar .sidebar-badge-text,
-          .partner-nav-sidebar .sidebar-badge-icon {
             display: none !important;
           }
-          .partner-nav-sidebar .sidebar-header {
-            padding: 0 !important;
-            justify-content: center !important;
+          .partner-bottom-nav {
+            display: block;
           }
-          .partner-nav-sidebar .menu-item-btn {
-            justify-content: center !important;
-            padding: 10px 0 !important;
+          .viewport-header-bar {
+            padding: 16px;
           }
-          .partner-nav-sidebar .sidebar-toggle-btn {
-            display: none !important;
+          .viewport-scrollable-content {
+            padding: 16px;
           }
         }
       `}</style>
