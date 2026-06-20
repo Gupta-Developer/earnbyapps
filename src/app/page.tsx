@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Home() {
-  const words = ['growth', 'conversions', 'results', 'actions', 'leads'];
+  const words = ['Actions', 'Results', 'Leads', 'Conversions', 'Growth'];
   const [wordIndex, setWordIndex] = useState(0);
   const [currentText, setCurrentText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -31,7 +31,7 @@ export default function Home() {
     } else if (isDeleting && currentText === '') {
       setIsDeleting(false);
       setWordIndex((prev) => (prev + 1) % words.length);
-      setTypingSpeed(300);
+      setTypingSpeed(1200); // 1.2s pause before typing the next word
     }
 
     return () => clearTimeout(timer);
@@ -52,8 +52,15 @@ export default function Home() {
         </h1>
 
         {/* Hero description */}
-        <p className="landing-hero-subtitle">
-          Pay only for <span className="typing-text">{currentText}</span><span className="typing-cursor">|</span>
+        <div className="landing-hero-subtitle">
+          <span className="static-part">Pay only for&nbsp;</span>
+          <span className="dynamic-part">
+            {currentText}
+            <span className="typing-cursor"></span>
+          </span>
+        </div>
+        <p className="landing-hero-tagline">
+          Don't pay for impressions!
         </p>
 
         {/* Promo Credit card box */}
@@ -88,21 +95,50 @@ export default function Home() {
           flex-direction: column;
           align-items: center;
         }
-        .typing-text {
+        .landing-hero-subtitle {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          max-width: 700px;
+          margin: 0 auto 8px;
+          font-size: 1.25rem;
+          color: var(--text-secondary);
+          line-height: 1.6;
+        }
+        .landing-hero-tagline {
+          font-size: 0.95rem;
+          color: var(--text-muted);
+          margin-bottom: 40px;
+          font-weight: 500;
+          opacity: 0.85;
+          letter-spacing: 0.02em;
+        }
+        .static-part {
+          flex: 1;
+          text-align: right;
+          white-space: nowrap;
+        }
+        .dynamic-part {
+          flex: 1;
+          text-align: left;
           color: var(--accent-indigo);
           font-weight: 700;
-          border-bottom: 2px solid var(--accent-indigo-glow);
-          padding-bottom: 2px;
+          position: relative;
+          white-space: nowrap;
         }
         .typing-cursor {
-          color: var(--accent-indigo);
-          font-weight: 300;
-          animation: blink 0.75s step-end infinite;
+          display: inline-block;
+          width: 3px;
+          height: 1.25rem;
+          background-color: var(--accent-indigo);
           margin-left: 2px;
+          vertical-align: text-bottom;
+          animation: blink 0.75s step-end infinite;
         }
         @keyframes blink {
-          from, to { color: transparent }
-          50% { color: var(--accent-indigo); }
+          from, to { background-color: transparent }
+          50% { background-color: var(--accent-indigo); }
         }
       `}</style>
     </main>

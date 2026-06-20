@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 
-export default function PartnerLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { userRole } = useApp();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('partner-sidebar-collapsed');
+    const saved = localStorage.getItem('admin-sidebar-collapsed');
     if (saved !== null) {
       setIsCollapsed(saved === 'true');
     }
@@ -20,19 +20,19 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   const handleToggleCollapse = () => {
     const newVal = !isCollapsed;
     setIsCollapsed(newVal);
-    localStorage.setItem('partner-sidebar-collapsed', String(newVal));
+    localStorage.setItem('admin-sidebar-collapsed', String(newVal));
   };
 
-  if (userRole !== 'user') {
+  if (userRole !== 'admin') {
     return (
-      <main className="partner-denied-container">
+      <main className="admin-denied-container">
         <div className="glass-card restriction-card">
           <span className="restriction-icon">🔒</span>
           <h2>Access Denied</h2>
-          <p>You must select the <strong>Standard User</strong> role from the top-right account menu to access this partner campaign manager.</p>
+          <p>You must select the <strong>Administrator</strong> role from the top-right account menu to access this moderation dashboard.</p>
         </div>
         <style>{`
-          .partner-denied-container {
+          .admin-denied-container {
             max-width: 800px;
             margin: 80px auto;
             padding: 0 24px;
@@ -67,32 +67,41 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     );
   }
 
-  const sidebarItems = [
-    { id: 'overview', href: '/partner/overview', label: 'Overview', icon: '🏠' },
-    { id: 'my-tasks', href: '/partner/my-tasks', label: 'My Campaigns', icon: '📋' },
-    { id: 'assigned-campaigns', href: '/partner/assigned-campaigns', label: 'Assigned Campaigns', icon: '🎯' },
-    { id: 'create-campaign', href: '/partner/create-campaign', label: 'Create Campaign', icon: '➕' },
-    { id: 'platforms', href: '/partner/platforms', label: 'Platforms', icon: '📱' },
-    { id: 'help-center', href: '/partner/help-center', label: 'Help Center', icon: '❓' }
+  const menuItems = [
+    { id: 'Overview', label: 'Overview', href: '/admin', icon: '🏠' },
+    { id: 'Analytics', label: 'Analytics', href: '/admin/analytics', icon: '📊' },
+    { id: 'New Campaign', label: 'New Campaign', href: '/admin/new-campaign', icon: '➕' },
+    { id: 'All Campaigns', label: 'All Campaigns', href: '/admin/all-campaigns', icon: '📁' },
+    { id: 'New Leads for Partnership', label: 'New Leads for Partnership', href: '/admin/partnership-leads', icon: '📝' },
+    { id: 'All Submissions', label: 'All Submissions', href: '/admin/submissions', icon: '✔️' },
+    { id: 'Manage Users', label: 'Manage Users', href: '/admin/users', icon: '👤' },
+    { id: 'Wallet', label: 'Wallet', href: '/admin/wallet', icon: '💼' },
+    { id: 'Partner Support', label: 'Partner Support', href: '/admin/support', icon: '💬' },
+    { id: 'Manage Banners', label: 'Manage Banners', href: '/admin/banners', icon: '🖼️' },
+    { id: 'Manage Blog', label: 'Manage Blog', href: '/admin/blog', icon: '📰' },
+    { id: 'Manage Referrals', label: 'Manage Referrals', href: '/admin/referrals', icon: '🔗' },
+    { id: 'Payment Options', label: 'Payment Options', href: '/admin/payment-options', icon: '⚙' }
   ];
 
-  const activeTitle = 
-    pathname.includes('/create-campaign') ? 'Create Campaign' : 
-    pathname.includes('/my-tasks') ? 'My Campaigns' : 
-    pathname.includes('/assigned-campaigns') ? 'Assigned Campaigns' :
-    pathname.includes('/platforms') ? 'Platforms' : 
-    pathname.includes('/help-center') ? 'Help Center' : 'Overview';
+  const activeItem = menuItems.find(item => {
+    if (item.href === '/admin') {
+      return pathname === '/admin';
+    }
+    return pathname.startsWith(item.href);
+  });
+
+  const activeTitle = activeItem ? activeItem.label : 'Overview';
 
   return (
-    <div className="partner-portal-root">
+    <div className="admin-dashboard-root">
       
-      {/* 1. Left Navigation Sidebar */}
-      <aside className={`partner-nav-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+      {/* Sidebar Navigation */}
+      <aside className={`admin-nav-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           {!isCollapsed && (
             <>
-              <span className="sidebar-badge-icon">👤</span>
-              <span className="sidebar-badge-text">PARTNER</span>
+              <span className="sidebar-badge-icon">🛡️</span>
+              <span className="sidebar-badge-text">ADMIN</span>
             </>
           )}
           <button 
@@ -104,8 +113,8 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           </button>
         </div>
         <nav className="sidebar-menu-list">
-          {sidebarItems.map((item) => {
-            const isActive = pathname === item.href;
+          {menuItems.map((item) => {
+            const isActive = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.id}
@@ -122,45 +131,25 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         </nav>
       </aside>
 
-      {/* 2. Content viewport */}
-      <div className="partner-content-viewport">
+      {/* Main Content viewport */}
+      <div className="admin-content-viewport">
         {/* Top Header Bar */}
         <header className="viewport-header-bar">
           <h1 className="active-tab-title">{activeTitle}</h1>
-          <div className="partner-profile-display">
-            <span className="partner-avatar">👤</span>
-            <span className="partner-profile-name">Hi, Partner User</span>
+          <div className="admin-profile-display">
+            <span className="admin-avatar">👤</span>
+            <span className="admin-profile-name">Hi, Admin User</span>
           </div>
         </header>
 
-        {/* Scrollable contents */}
+        {/* Scrollable Content */}
         <div className="viewport-scrollable-content">
           {children}
         </div>
       </div>
 
-      {/* 3. Bottom Navigation Bar (Mobile only) */}
-      <nav className="partner-bottom-nav">
-        <div className="bottom-nav-list">
-          {sidebarItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                className={`bottom-nav-item ${isActive ? 'active' : ''}`}
-                style={{ textDecoration: 'none' }}
-              >
-                <span className="bottom-nav-icon">{item.icon}</span>
-                <span className="bottom-nav-label">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
       <style>{`
-        .partner-portal-root {
+        .admin-dashboard-root {
           display: flex;
           height: 100vh;
           width: 100vw;
@@ -169,8 +158,8 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           color: var(--text-primary);
         }
         
-        /* Sidebar Navigation */
-        .partner-nav-sidebar {
+        /* Navigation Sidebar */
+        .admin-nav-sidebar {
           width: 260px;
           background: var(--bg-card);
           border-right: 1px solid var(--border-color);
@@ -180,22 +169,22 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           overflow-y: auto;
           transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, border-color 0.2s;
         }
-        .partner-nav-sidebar.collapsed {
+        .admin-nav-sidebar.collapsed {
           width: 70px;
         }
         .sidebar-header {
-          height: 69px;
-          padding: 0 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          border-bottom: 1px solid var(--border-color);
-          box-sizing: border-box;
+          height: 69px !important;
+          padding: 0 24px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: 10px !important;
+          border-bottom: 1px solid var(--border-color) !important;
+          box-sizing: border-box !important;
         }
-        .partner-nav-sidebar.collapsed .sidebar-header {
-          padding: 0;
-          justify-content: center;
+        .admin-nav-sidebar.collapsed .sidebar-header {
+          padding: 0 !important;
+          justify-content: center !important;
         }
         .sidebar-badge-icon {
           font-size: 1.25rem;
@@ -228,7 +217,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           color: var(--text-primary);
           border-color: var(--border-hover);
         }
-        .partner-nav-sidebar.collapsed .sidebar-toggle-btn {
+        .admin-nav-sidebar.collapsed .sidebar-toggle-btn {
           margin-left: 0;
         }
         .sidebar-menu-list {
@@ -253,7 +242,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           text-align: left;
           transition: all 0.2s;
         }
-        .partner-nav-sidebar.collapsed .menu-item-btn {
+        .admin-nav-sidebar.collapsed .menu-item-btn {
           justify-content: center;
           padding: 10px 0;
         }
@@ -271,14 +260,14 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         }
 
         /* Viewport Panel */
-        .partner-content-viewport {
+        .admin-content-viewport {
           flex: 1;
           display: flex;
           flex-direction: column;
           overflow: hidden;
           background: rgba(0, 0, 0, 0.02);
         }
-        body.light-theme .partner-content-viewport {
+        body.light-theme .admin-content-viewport {
           background: #f1f5f9;
         }
         .viewport-header-bar {
@@ -288,9 +277,9 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           display: flex;
           justify-content: space-between;
           align-items: center;
-          height: 69px;
+          height: 69px !important;
           flex-shrink: 0;
-          box-sizing: border-box;
+          box-sizing: border-box !important;
           transition: background-color 0.2s, border-color 0.2s;
         }
         .active-tab-title {
@@ -299,14 +288,14 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           font-weight: 700;
           color: var(--text-primary);
         }
-        .partner-profile-display {
+        .admin-profile-display {
           display: flex;
           align-items: center;
           gap: 8px;
           font-size: 0.85rem;
           color: var(--text-secondary);
         }
-        .partner-avatar {
+        .admin-avatar {
           width: 32px;
           height: 32px;
           border-radius: 50%;
@@ -316,7 +305,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           justify-content: center;
           font-size: 1rem;
         }
-        .partner-profile-name {
+        .admin-profile-name {
           font-weight: 600;
           color: var(--text-primary);
         }
@@ -325,77 +314,26 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           overflow-y: auto;
           padding: 32px;
         }
-
-        /* Bottom Navigation (Mobile) */
-        .partner-bottom-nav {
-          display: none;
-        }
-
+        
         @media (max-width: 768px) {
-          .partner-nav-sidebar {
+          .admin-nav-sidebar {
+            width: 70px !important;
+          }
+          .admin-nav-sidebar .menu-item-lbl,
+          .admin-nav-sidebar .sidebar-badge-text,
+          .admin-nav-sidebar .sidebar-badge-icon {
             display: none !important;
           }
-          .partner-bottom-nav {
-            display: flex !important;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 64px;
-            background: var(--bg-card);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid var(--border-color);
-            z-index: 9999;
-            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
-            box-sizing: border-box;
+          .admin-nav-sidebar .sidebar-header {
+            padding: 0 !important;
+            justify-content: center !important;
           }
-          .bottom-nav-list {
-            display: flex;
-            height: 100%;
-            width: 100%;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 4px;
+          .admin-nav-sidebar .menu-item-btn {
+            justify-content: center !important;
+            padding: 10px 0 !important;
           }
-          .bottom-nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            height: 100%;
-            text-decoration: none;
-            color: var(--text-secondary);
-            transition: all 0.2s ease;
-            gap: 4px;
-          }
-          .bottom-nav-item.active {
-            color: var(--accent-indigo);
-            font-weight: 600;
-          }
-          .bottom-nav-icon {
-            font-size: 1.25rem;
-            transition: transform 0.2s ease;
-          }
-          .bottom-nav-item:active .bottom-nav-icon {
-            transform: scale(0.85);
-          }
-          .bottom-nav-label {
-            font-size: 0.65rem;
-            font-weight: 500;
-            letter-spacing: 0.01em;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 60px;
-          }
-          .viewport-header-bar {
-            padding: 16px;
-          }
-          .viewport-scrollable-content {
-            padding: 16px 16px 80px 16px !important;
+          .admin-nav-sidebar .sidebar-toggle-btn {
+            display: none !important;
           }
         }
       `}</style>

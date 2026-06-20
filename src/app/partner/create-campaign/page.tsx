@@ -66,46 +66,10 @@ export default function CreatePartnerCampaign() {
   const [targetCompletions, setTargetCompletions] = useState<number>(1000);
   const [costPerCompletion, setCostPerCompletion] = useState<number>(0.50);
 
-  // Task builder states
-  const [tasks, setTasks] = useState<AppTask[]>([]);
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskDesc, setTaskDesc] = useState('');
-  const [taskReward, setTaskReward] = useState<number>(0.25);
-  const [activePresetIndex, setActivePresetIndex] = useState<number | null>(null);
-
   // Calculate live campaign budget
   const totalCampaignBudget = useMemo(() => {
     return parseFloat((targetCompletions * costPerCompletion).toFixed(2));
   }, [targetCompletions, costPerCompletion]);
-
-  const handleApplyPreset = (preset: TaskPreset, index: number) => {
-    setTaskTitle(preset.title);
-    setTaskDesc(preset.desc);
-    setTaskReward(preset.reward);
-    setActivePresetIndex(index);
-  };
-
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!taskTitle) return;
-
-    const newTask: AppTask = {
-      id: `task-builder-${Date.now()}-${tasks.length}`,
-      title: taskTitle,
-      description: taskDesc,
-      reward: taskReward
-    };
-
-    setTasks([...tasks, newTask]);
-    setTaskTitle('');
-    setTaskDesc('');
-    setTaskReward(0.25);
-    setActivePresetIndex(null);
-  };
-
-  const handleRemoveTask = (id: string) => {
-    setTasks(tasks.filter(t => t.id !== id));
-  };
 
   const togglePlatform = (plat: 'iOS' | 'Android' | 'Web') => {
     if (platforms.includes(plat)) {
@@ -141,7 +105,7 @@ export default function CreatePartnerCampaign() {
       tags: tags.length > 0 ? tags : ['Bulk campaign', 'Verified partner'],
       actionText: `Open ${name}`,
       externalUrl,
-      suggestedTasks: tasks,
+      suggestedTasks: [],
       targetCompletions,
       costPerCompletion,
       totalBudget: totalCampaignBudget,
@@ -163,7 +127,6 @@ export default function CreatePartnerCampaign() {
     setExternalUrl('');
     setTargetCompletions(1000);
     setCostPerCompletion(0.50);
-    setTasks([]);
     setSuccess(false);
     setTargetCountry('Global');
   };
@@ -296,13 +259,16 @@ export default function CreatePartnerCampaign() {
                   <div className="form-group">
                     <label>Supported Platforms (Select all that apply) *</label>
                     <div className="checkbox-row">
-                      {['iOS', 'Android', 'Web'].map((plat) => (
+                      {[
+                        { value: 'iOS', label: 'App Store' },
+                        { value: 'Android', label: 'Android' }
+                      ].map((plat) => (
                         <div 
-                          key={plat} 
-                          onClick={() => togglePlatform(plat as any)}
-                          className={`checkbox-selector ${platforms.includes(plat as any) ? 'active' : ''}`}
+                          key={plat.value} 
+                          onClick={() => togglePlatform(plat.value as any)}
+                          className={`checkbox-selector ${platforms.includes(plat.value as any) ? 'active' : ''}`}
                         >
-                          {platforms.includes(plat as any) ? '✓' : '+'} {plat}
+                          {platforms.includes(plat.value as any) ? '✓' : '+'} {plat.label}
                         </div>
                       ))}
                     </div>
@@ -360,99 +326,8 @@ export default function CreatePartnerCampaign() {
                 </div>
               </div>
 
-              {/* TASK LIST BUILDER */}
-              <div className="form-section">
-                <h2 className="section-header">4. Action Task List</h2>
-                <p className="section-desc">Design sub-tasks users perform to progress in the campaign. Use one of our quick presets to populate instantly!</p>
-
-                {/* TASK PRESET GRID */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 600, display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Click to Load Preset Template:</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
-                    {TASK_PRESETS.map((preset, index) => (
-                      <div
-                        key={preset.title}
-                        onClick={() => handleApplyPreset(preset, index)}
-                        style={{
-                          padding: '8px 12px',
-                          background: activePresetIndex === index ? 'rgba(79, 70, 229, 0.12)' : 'rgba(255,255,255,0.01)',
-                          border: '1px solid ' + (activePresetIndex === index ? 'var(--accent-indigo)' : 'var(--border-color)'),
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          textAlign: 'center',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        className="preset-card"
-                      >
-                        <span style={{ fontSize: '1.4rem' }}>{preset.icon}</span>
-                        <strong style={{ fontSize: '0.78rem', display: 'block', color: 'var(--text-primary)' }}>{preset.tag}</strong>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>+${preset.reward.toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="added-tasks-container">
-                  {tasks.length > 0 ? (
-                    tasks.map((task, idx) => (
-                      <div key={task.id} className="task-preview-chip">
-                        <div>
-                          <strong>{idx + 1}. {task.title}</strong>
-                          <span className="task-reward-preview">+{COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'}{task.reward.toFixed(2)}</span>
-                          <p className="task-desc-preview">{task.description}</p>
-                        </div>
-                        <button type="button" onClick={() => handleRemoveTask(task.id)} className="remove-task-btn">✕</button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="no-tasks-text">No sub-tasks configured. Add preset tasks or customize below.</p>
-                  )}
-                </div>
-
-                <div className="glass-card task-builder-subform">
-                  <h3>Customize Task Action</h3>
-                  <div className="form-group">
-                    <label>Action Title</label>
-                    <input 
-                      type="text" 
-                      value={taskTitle} 
-                      onChange={(e) => setTaskTitle(e.target.value)}
-                      placeholder="e.g. Register account with email"
-                    />
-                  </div>
-                  
-                  <div className="form-row">
-                    <div className="form-group" style={{ flex: 2 }}>
-                      <label>Action Description</label>
-                      <input 
-                        type="text" 
-                        value={taskDesc} 
-                        onChange={(e) => setTaskDesc(e.target.value)}
-                        placeholder="e.g. Accounts must be verified to count."
-                      />
-                    </div>
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <label>Action Payout ({COUNTRY_CURRENCIES[targetCountry]?.currency || 'USD'} {COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'})</label>
-                      <input 
-                        type="number" 
-                        step="0.05"
-                        value={taskReward} 
-                        onChange={(e) => setTaskReward(parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                  </div>
-
-                  <button type="button" onClick={handleAddTask} className="glow-btn-cyan" style={{ padding: '8px 16px', fontSize: '0.85rem', width: 'fit-content' }}>
-                    + Insert Action
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="glow-btn-purple" style={{ width: '100%', padding: '16px', fontSize: '1.1rem' }}>
+              {/* Submit Button */}
+              <button type="submit" className="glow-btn-purple" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '16px' }}>
                 Submit Partnership Lead
               </button>
             </form>
@@ -557,47 +432,42 @@ export default function CreatePartnerCampaign() {
                   </p>
                 </div>
 
-                {/* Simulated Task List */}
-                <div>
-                  <h6 style={{ margin: '0 0 8px 0', fontSize: '0.78rem', color: '#e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions Required</h6>
+                {/* Simulated Campaign Parameters */}
+                <div style={{
+                  background: '#111827',
+                  border: '1px solid #1f293d',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <h6 style={{ margin: 0, fontSize: '0.78rem', color: '#e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Offer details</h6>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {tasks.length > 0 ? (
-                      tasks.map((task, idx) => (
-                        <div key={task.id} style={{
-                          background: '#111827',
-                          border: '1px solid #1f293d',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}>
-                          <div style={{ flex: 1, paddingRight: '8px' }}>
-                            <strong style={{ fontSize: '0.75rem', color: '#fff', display: 'block' }}>{idx + 1}. {task.title}</strong>
-                            <span style={{ fontSize: '0.68rem', color: '#9ca3af' }}>{task.description}</span>
-                          </div>
-                          <span style={{
-                            color: '#10b981',
-                            fontWeight: 'bold',
-                            fontSize: '0.78rem',
-                            fontFamily: 'var(--font-display)',
-                            whiteSpace: 'nowrap'
-                          }}>+{COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'}{task.reward.toFixed(2)}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={{
-                        textAlign: 'center',
-                        padding: '24px 12px',
-                        border: '1px dashed #1f293d',
-                        borderRadius: '8px',
-                        color: '#6b7280',
-                        fontSize: '0.72rem'
-                      }}>
-                        No actions added. Click presets on the left to see tasks render live here!
-                      </div>
-                    )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                    <span style={{ color: '#9ca3af' }}>Payout Rate:</span>
+                    <strong style={{ color: '#10b981' }}>{COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'}{costPerCompletion.toFixed(2)} / action</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                    <span style={{ color: '#9ca3af' }}>Target Audience:</span>
+                    <strong style={{ color: '#fff' }}>{targetCountry} Users</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                    <span style={{ color: '#9ca3af' }}>Platforms:</span>
+                    <strong style={{ color: '#fff' }}>
+                      {platforms.length > 0 
+                        ? platforms.map(p => p === 'iOS' ? 'App Store' : p).join(', ') 
+                        : 'Select above'}
+                    </strong>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid #1f293d', paddingTop: '8px' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#9ca3af', display: 'block', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>Guidelines</span>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                      {longDescription || 'Describe details, rules, and steps for the campaign.'}
+                    </p>
                   </div>
                 </div>
               </div>

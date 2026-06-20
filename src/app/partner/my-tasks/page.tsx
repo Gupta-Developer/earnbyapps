@@ -24,8 +24,8 @@ export default function PartnerTasks() {
   return (
     <div className="partner-content-card">
       <div className="card-header-section">
-        <h2 className="card-heading">My Configured Tasks</h2>
-        <p className="card-subheading">A list of all advertising placements and bulk conversion states submitted under your account.</p>
+        <h2 className="card-heading">My Campaigns</h2>
+        <p className="card-subheading">Track your submitted campaign proposals, approvals, and performance metrics.</p>
       </div>
 
       <div className="table-responsive-container">

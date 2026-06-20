@@ -44,48 +44,58 @@ export default function PartnerHelpCenter() {
           </div>
         </div>
 
-        {/* Support Request Form */}
-        <div className="glass-card" style={{ padding: '24px', height: 'fit-content' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '12px' }}>Open Ticket</h3>
+        {/* Support Channels */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Direct Contact Channels</h3>
           
-          {success ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>✉️</span>
-              <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--accent-emerald)' }}>Ticket Opened Successfully!</strong>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>Support staff will respond within 6 hours.</p>
-              <button onClick={() => setSuccess(false)} className="menu-item-btn" style={{ margin: '16px auto 0', padding: '6px 12px', border: '1px solid var(--border-color)' }}>Send Another Message</button>
+          {/* WhatsApp Card */}
+          <div className="contact-card whatsapp-highlight">
+            <div className="fastest-badge">⚡ FASTEST WAY</div>
+            <div className="contact-header">
+              <span className="contact-icon">💬</span>
+              <div>
+                <h4>WhatsApp Support</h4>
+                <p className="contact-status">Online • Instant Replies</p>
+              </div>
             </div>
-          ) : (
-            <form onSubmit={handleSubmitTicket} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="form-group">
-                <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Subject *</label>
-                <input 
-                  type="text" 
-                  value={subject} 
-                  onChange={(e) => setSubject(e.target.value)} 
-                  placeholder="e.g. Budget top-up query" 
-                  required
-                  style={{ padding: '8px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-primary)', width: '100%' }}
-                />
-              </div>
+            <p className="contact-desc">
+              Connect directly with our partner success team for instant campaign updates, wallet top-ups, or integration help.
+            </p>
+            <a 
+              href="https://wa.me/mocknumber" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="whatsapp-btn text-center"
+              style={{ textDecoration: 'none' }}
+              onClick={(e) => {
+                e.preventDefault();
+                alert('Opening WhatsApp chat with EarnByApps Partner Support...');
+              }}
+            >
+              Chat on WhatsApp
+            </a>
+          </div>
 
-              <div className="form-group">
-                <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Message Detail *</label>
-                <textarea 
-                  value={message} 
-                  onChange={(e) => setMessage(e.target.value)} 
-                  placeholder="Describe your inquiry details..." 
-                  rows={4}
-                  required
-                  style={{ padding: '8px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-primary)', width: '100%' }}
-                />
+          {/* Email Card */}
+          <div className="contact-card email-card">
+            <div className="contact-header">
+              <span className="contact-icon">✉️</span>
+              <div>
+                <h4>Email Support</h4>
+                <p className="contact-status">Replies in 4-6 hours</p>
               </div>
-
-              <button type="submit" className="glow-btn-cyan" style={{ padding: '10px', width: '100%', marginTop: '6px' }}>
-                Submit Request
-              </button>
-            </form>
-          )}
+            </div>
+            <p className="contact-desc">
+              For complex API postback integration verification, contract billing requests, or documentation feedback.
+            </p>
+            <a 
+              href="mailto:partners@earnbyapps.com?subject=B2B Partner Support Query" 
+              className="email-btn text-center"
+              style={{ textDecoration: 'none' }}
+            >
+              Send Email Request
+            </a>
+          </div>
         </div>
 
       </div>
@@ -112,10 +122,104 @@ export default function PartnerHelpCenter() {
           font-size: 0.85rem;
           color: var(--text-secondary);
         }
-        .form-group {
+        
+        .contact-card {
+          position: relative;
+          padding: 24px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.01);
+          border: 1px solid var(--border-color);
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 12px;
+          transition: border-color 0.2s;
+        }
+        .contact-card:hover {
+          border-color: var(--border-hover);
+        }
+        
+        .whatsapp-highlight {
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          background: rgba(16, 185, 129, 0.02);
+        }
+        .whatsapp-highlight:hover {
+          border-color: rgba(16, 185, 129, 0.6);
+        }
+        
+        .fastest-badge {
+          position: absolute;
+          top: -10px;
+          right: 16px;
+          background: var(--accent-emerald);
+          color: #0b1220;
+          font-size: 0.65rem;
+          font-weight: 800;
+          padding: 3px 8px;
+          border-radius: 4px;
+          letter-spacing: 0.05em;
+        }
+        
+        .contact-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        .contact-icon {
+          font-size: 1.5rem;
+        }
+        
+        .contact-header h4 {
+          margin: 0;
+          font-size: 0.95rem;
+          color: var(--text-primary);
+        }
+        
+        .contact-status {
+          margin: 2px 0 0 0;
+          font-size: 0.72rem;
+          color: var(--text-muted);
+        }
+        
+        .contact-desc {
+          margin: 0;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+        }
+        
+        .whatsapp-btn {
+          background: var(--accent-emerald);
+          color: #0b1220;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          cursor: pointer;
+          border: none;
+          transition: opacity 0.2s;
+        }
+        .whatsapp-btn:hover {
+          opacity: 0.9;
+        }
+        
+        .email-btn {
+          background: transparent;
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background-color 0.2s, border-color 0.2s;
+        }
+        .email-btn:hover {
+          background: var(--bg-card-hover);
+          border-color: var(--border-hover);
+        }
+        .text-center {
+          text-align: center;
         }
       `}</style>
     </div>
