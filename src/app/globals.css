@@ -217,12 +217,12 @@ body.light-theme .glow-orb-1 {
   display: inline-block;
   background: rgba(79, 70, 229, 0.08);
   border: 1px solid rgba(79, 70, 229, 0.15);
-  padding: 6px 16px;
+  padding: 4px 14px;
   border-radius: 100px;
   color: #818cf8;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   letter-spacing: 0.02em;
 }
 
@@ -233,11 +233,11 @@ body.light-theme .hero-capsule {
 
 .landing-hero-title {
   font-family: var(--font-display);
-  font-size: 4rem;
+  font-size: 3.2rem;
   font-weight: 900;
   line-height: 1.15;
   letter-spacing: -0.04em;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   color: var(--text-primary);
 }
 
@@ -255,16 +255,16 @@ body.light-theme .hero-capsule {
   font-size: 1.25rem;
   color: var(--text-secondary);
   max-width: 700px;
-  margin: 0 auto 40px;
+  margin: 0 auto 12px;
   line-height: 1.6;
 }
 
 .promo-container-box {
-  max-width: 640px;
+  max-width: 600px;
   margin: 0 auto;
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  padding: 32px;
+  padding: 20px 24px;
   background: var(--hero-card-bg);
   box-shadow: var(--shadow-lg);
   display: flex;
@@ -280,10 +280,10 @@ body.light-theme .hero-capsule {
 
 .promo-header {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 800;
   color: #818cf8;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 body.light-theme .promo-header {
@@ -291,9 +291,9 @@ body.light-theme .promo-header {
 }
 
 .promo-subheader {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 /* Dashboard & Feed elements */

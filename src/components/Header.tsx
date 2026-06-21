@@ -7,13 +7,13 @@ import { useApp, UserRole } from '../context/AppContext';
 
 export default function Header() {
   const pathname = usePathname();
-  const { userRole, login, logout, theme, toggleTheme } = useApp();
+  const { userRole, userProfile, login, logout, theme, toggleTheme } = useApp();
   const [showAuthDropdown, setShowAuthDropdown] = useState(false);
 
   // Hide global navbar on dashboard pages ONLY IF the user has access to them.
   // If access is denied (wrong role), show the navbar so they can switch roles.
   const hasAdminAccess = pathname.startsWith('/admin') && userRole === 'admin';
-  const hasPartnerAccess = pathname.startsWith('/partner') && userRole === 'user';
+  const hasPartnerAccess = pathname.startsWith('/partner') && userRole === 'user' && !!userProfile;
   if (hasAdminAccess || hasPartnerAccess) {
     return null;
   }
@@ -56,7 +56,9 @@ export default function Header() {
               onClick={() => setShowAuthDropdown(!showAuthDropdown)}
             >
               <span>👤</span>
-              <span className="role-text-lbl">{userRole}</span>
+              <span className="role-text-lbl">
+                {userRole === 'user' && userProfile ? userProfile.fullName : userRole}
+              </span>
               <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▼</span>
             </button>
 
@@ -64,27 +66,52 @@ export default function Header() {
               <div className="glass-card auth-dropdown">
                 <div className="dropdown-title">Moderator Simulator</div>
                 <button 
-                  onClick={() => handleRoleChange('guest')} 
-                  className={`dropdown-item ${userRole === 'guest' ? 'active' : ''}`}
-                >
-                  Guest User
-                </button>
-                <button 
                   onClick={() => handleRoleChange('user')} 
                   className={`dropdown-item ${userRole === 'user' ? 'active' : ''}`}
                 >
-                  Standard User (Submit Apps)
+                  User (Submit Leads)
                 </button>
                 <button 
                   onClick={() => handleRoleChange('admin')} 
                   className={`dropdown-item ${userRole === 'admin' ? 'active' : ''}`}
                 >
-                  Administrator (Approve Apps)
+                  Admin (Approve Leads)
                 </button>
 
                 <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-color)' }}></div>
 
-                {userRole === 'user' && (
+                {userRole === 'user' && userProfile && (
+                  <div style={{ padding: '8px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid var(--border-color)', margin: '4px 0' }}>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px' }}>Profile Details</div>
+                    <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📧 {userProfile.email}</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>📞 {userProfile.phone}</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>👤 {userProfile.gender}</div>
+                    <button 
+                      onClick={() => {
+                        setShowAuthDropdown(false);
+                        window.dispatchEvent(new CustomEvent('open-profile-modal'));
+                      }}
+                      className="dropdown-item link-item"
+                      style={{ padding: '4px 0 0', marginTop: '6px', border: 'none', background: 'transparent', width: '100%', textAlign: 'left', fontSize: '0.78rem' }}
+                    >
+                      ✏️ Edit Profile
+                    </button>
+                  </div>
+                )}
+
+                {userRole === 'user' && !userProfile && (
+                  <button
+                    onClick={() => {
+                      setShowAuthDropdown(false);
+                      window.dispatchEvent(new CustomEvent('open-profile-modal'));
+                    }}
+                    className="dropdown-item link-item"
+                  >
+                    🔐 Sign In / Setup Profile
+                  </button>
+                )}
+
+                {userRole === 'user' && userProfile && (
                   <Link href="/partner/create-campaign" onClick={() => setShowAuthDropdown(false)} className="dropdown-item link-item">
                     ➡️ Go to Partner Portal
                   </Link>
@@ -96,7 +123,7 @@ export default function Header() {
                   </Link>
                 )}
 
-                {userRole !== 'guest' && (
+                {userRole !== 'user' && (
                   <button 
                     onClick={() => { logout(); setShowAuthDropdown(false); }} 
                     className="dropdown-item logout-btn"

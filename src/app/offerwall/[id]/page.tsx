@@ -3,7 +3,7 @@
 import React, { use, useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '../../../context/AppContext';
-import { AppTask } from '../../../data/apps';
+import { AppTask, getCategoryIcon } from '../../../data/apps';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -92,7 +92,7 @@ export default function TaskDetails({ params }: PageProps) {
         <div className="glass-card main-info-card">
           <div className="app-detail-header-row">
             <div className="header-left">
-              <div className="app-category-badge">{app.category}</div>
+              <div className="app-category-badge">{getCategoryIcon(app.category)} {app.category}</div>
               <h1 className="detail-app-title">{app.name}</h1>
               <div className="meta-stats-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
                 <span>Rating: <strong className="highlight-amber">★ {app.rating}</strong></span>
@@ -120,6 +120,20 @@ export default function TaskDetails({ params }: PageProps) {
             </div>
           )}
         </div>
+
+        {/* Tutorial Video Section */}
+        {app.videoUrl && (
+          <div className="glass-card video-tutorial-card" style={{ display: 'flex', gap: '16px', alignItems: 'center', background: 'rgba(251, 191, 36, 0.04)', border: '1px solid rgba(251, 191, 36, 0.15)', padding: '20px', borderRadius: '12px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '2.2rem' }}>🎥</span>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>Need help? Watch the video tutorial!</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>A short video walkthrough explaining step-by-step how to complete this task correctly.</p>
+            </div>
+            <a href={app.videoUrl} target="_blank" rel="noopener noreferrer" className="glow-btn-cyan" style={{ textDecoration: 'none', padding: '10px 20px', fontSize: '0.88rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', borderRadius: '8px' }}>
+              Watch Tutorial ↗
+            </a>
+          </div>
+        )}
 
         {/* Tasks Section */}
         <div className="tasks-section-wrapper">

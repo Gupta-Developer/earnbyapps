@@ -3,8 +3,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { EarningApp, EARNING_APPS, AppTask } from '../data/apps';
 
-export type UserRole = 'guest' | 'user' | 'admin';
+export type UserRole = 'user' | 'admin';
 export type AppTheme = 'light' | 'dark';
+
+export interface UserProfile {
+  fullName: string;
+  email: string;
+  phone: string;
+  gender: string;
+  country?: string;
+  paymentMethod?: string;
+  paymentDetails?: string;
+}
 
 export interface PartnershipLead {
   id: string;
@@ -33,6 +43,7 @@ export interface PartnershipLead {
 
 interface AppContextType {
   userRole: UserRole;
+  userProfile: UserProfile | null;
   apps: EarningApp[];
   pendingApps: EarningApp[];
   partnershipLeads: PartnershipLead[];
@@ -48,6 +59,7 @@ interface AppContextType {
   updateLeadStatus: (id: string, status: PartnershipLead['status']) => void;
   claimTask: (taskId: string, reward: number) => void;
   toggleTheme: () => void;
+  updateUserProfile: (profile: UserProfile | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -78,7 +90,8 @@ const INITIAL_LEADS: PartnershipLead[] = [
 ];
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
-  const [userRole, setUserRole] = useState<UserRole>('guest');
+  const [userRole, setUserRole] = useState<UserRole>('user');
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [apps, setApps] = useState<EarningApp[]>([]);
   const [pendingApps, setPendingApps] = useState<EarningApp[]>([]);
   const [partnershipLeads, setPartnershipLeads] = useState<PartnershipLead[]>([]);
@@ -91,6 +104,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     try {
       const storedRole = localStorage.getItem('eb_role') as UserRole;
+      const storedProfile = localStorage.getItem('eb_profile');
       const storedApps = localStorage.getItem('eb_apps');
       const storedPending = localStorage.getItem('eb_pending');
       const storedLeads = localStorage.getItem('eb_leads');
@@ -98,7 +112,14 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       const storedCompleted = localStorage.getItem('eb_completed');
       const storedTheme = localStorage.getItem('eb_theme') as AppTheme;
 
-      if (storedRole) setUserRole(storedRole);
+      if (storedRole) {
+        setUserRole(storedRole);
+      } else {
+        setUserRole('user');
+      }
+      if (storedProfile) {
+        setUserProfile(JSON.parse(storedProfile));
+      }
       if (storedTheme) {
         setTheme(storedTheme);
       } else {
@@ -176,12 +197,26 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     localStorage.setItem('eb_completed', JSON.stringify(completedTaskIds));
   }, [completedTaskIds, isInitialized]);
 
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (userProfile) {
+      localStorage.setItem('eb_profile', JSON.stringify(userProfile));
+    } else {
+      localStorage.removeItem('eb_profile');
+    }
+  }, [userProfile, isInitialized]);
+
   const login = (role: UserRole) => {
     setUserRole(role);
   };
 
   const logout = () => {
-    setUserRole('guest');
+    setUserRole('user');
+    setUserProfile(null);
+  };
+
+  const updateUserProfile = (profile: UserProfile | null) => {
+    setUserProfile(profile);
   };
 
   const submitOffer = (newApp: Omit<EarningApp, 'id' | 'rating' | 'reviewsCount' | 'difficulty'>) => {
@@ -218,8 +253,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     const fullLead: PartnershipLead = {
       ...lead,
       id: `lead-${Date.now()}`,
-      partnerName: 'Alice Partner', // Simple default name
-      partnerEmail: 'alice@partner.com', // Simple default email
+      partnerName: userProfile?.fullName || 'Alice Partner', // Simple default name
+      partnerEmail: userProfile?.email || 'alice@partner.com', // Simple default email
       status: 'New',
       createdAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     };
@@ -243,6 +278,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   return (
     <AppContext.Provider value={{
       userRole,
+      userProfile,
       apps,
       pendingApps,
       partnershipLeads,
@@ -257,7 +293,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       submitPartnershipLead,
       updateLeadStatus,
       claimTask,
-      toggleTheme
+      toggleTheme,
+      updateUserProfile
     }}>
       {children}
     </AppContext.Provider>

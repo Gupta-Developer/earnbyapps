@@ -1,25 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
-import { AppTask } from '../../../data/apps';
-
-interface TaskPreset {
-  title: string;
-  desc: string;
-  reward: number;
-  icon: string;
-  tag: string;
-}
-
-const TASK_PRESETS: TaskPreset[] = [
-  { title: 'Download & Launch', desc: 'Download from the app store, open it, and accept terms.', reward: 0.50, icon: '📱', tag: 'Install' },
-  { title: 'Create Verified Profile', desc: 'Register an account using your email and confirm it.', reward: 0.75, icon: '👤', tag: 'Register' },
-  { title: 'Complete Level 5', desc: 'Play the game and reach profile or stage level 5.', reward: 1.50, icon: '🎮', tag: 'Gaming' },
-  { title: 'Demographics Survey', desc: 'Submit the 5-minute demographic survey questionnaire.', reward: 1.00, icon: '📋', tag: 'Survey' },
-  { title: 'Submit Review', desc: 'Leave an honest review on the app store with feedback.', reward: 1.25, icon: '⭐', tag: 'Feedback' },
-  { title: 'Enable Background Share', desc: 'Keep background data connection active for 24 hours.', reward: 2.00, icon: '⚡', tag: 'Passive' }
-];
+import { getCategoryIcon } from '../../../data/apps';
+import { countries } from '../../../data/countries';
 
 const COUNTRY_CURRENCIES: Record<string, { currency: string; symbol: string }> = {
   'Global': { currency: 'USD', symbol: '$' },
@@ -34,42 +18,22 @@ export default function CreatePartnerCampaign() {
   const [success, setSuccess] = useState(false);
 
   // Form states
-  const [name, setName] = useState('');
+  const [taskName, setTaskName] = useState('');
   const [category, setCategory] = useState<'Gaming' | 'Surveys' | 'App Testing' | 'Passive' | 'App Install & Sign Up' | 'LinkedIn Followers' | 'Google Maps Reviews' | 'Telegram Members' | 'WhatsApp Members' | 'Instagram Followers' | 'Facebook Page Followers' | 'Youtube Subscribers' | 'Trustpilot Reviews' | 'Justdial Reviews' | 'Play Store Reviews' | 'Custom Task'>('Gaming');
-  const [platforms, setPlatforms] = useState<('iOS' | 'Android' | 'Web')[]>([]);
-  const [description, setDescription] = useState('');
-  const [longDescription, setLongDescription] = useState('');
-  const [tagsInput, setTagsInput] = useState('');
-  const [externalUrl, setExternalUrl] = useState('');
   const [targetCountry, setTargetCountry] = useState('Global');
-
-  const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-    'App Install & Sign Up': 'Get Genuine Users On Your App from India. High Value Users',
-    'LinkedIn Followers': 'Get Genuine Active LinkedIn Followers from India',
-    'Google Maps Reviews': 'Get 5 Star Reviews On Your GMB Profile (⚠️Facing Dropping)',
-    'Telegram Members': 'Get Real Active Indian Telegram Users On Your Telegram Channel',
-    'WhatsApp Members': 'Get Real Active Indian WhatsApp Users On Your WhatsApp Channel',
-    'Instagram Followers': 'Get Real Active Indian Followers On Your Profile',
-    'Facebook Page Followers': 'Get Page Likes & Real Followers from India',
-    'Youtube Subscribers': 'Get Genuine Youtube Subscribers from India',
-    'Trustpilot Reviews': 'Get 5 Star Reviews On Your Business\'s Trustpilot Profile',
-    'Justdial Reviews': 'Get 5 Star Reviews On Your Business\'s Justdial Profile',
-    'Play Store Reviews': 'Get 5 Star Positive Reviews On Your App',
-    'Custom Task': 'Get Your Gigs Completed With Our Platform Users',
-    'Gaming': 'Complete in-game actions, download and play to earn.',
-    'Surveys': 'Share your feedback, answer daily opinion polls to earn.',
-    'App Testing': 'Test beta versions of apps and write UI feedback reviews.',
-    'Passive': 'Earn passive income in the background automatically.'
-  };
-
-  // B2B Bulk Settings
+  const [taskLink, setTaskLink] = useState('');
+  const [platforms, setPlatforms] = useState<('iOS' | 'Android' | 'Web')[]>([]);
+  const [payout, setPayout] = useState<number>(0.50);
   const [targetCompletions, setTargetCompletions] = useState<number>(1000);
-  const [costPerCompletion, setCostPerCompletion] = useState<number>(0.50);
 
-  // Calculate live campaign budget
-  const totalCampaignBudget = useMemo(() => {
-    return parseFloat((targetCompletions * costPerCompletion).toFixed(2));
-  }, [targetCompletions, costPerCompletion]);
+  const getCurrencyDetails = (countryName: string) => {
+    if (COUNTRY_CURRENCIES[countryName]) {
+      return COUNTRY_CURRENCIES[countryName];
+    }
+    if (countryName === 'India') return { currency: 'INR', symbol: '₹' };
+    if (countryName === 'United Kingdom') return { currency: 'GBP', symbol: '£' };
+    return { currency: 'USD', symbol: '$' };
+  };
 
   const togglePlatform = (plat: 'iOS' | 'Android' | 'Web') => {
     if (platforms.includes(plat)) {
@@ -81,64 +45,60 @@ export default function CreatePartnerCampaign() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || !longDescription || !externalUrl || platforms.length === 0) {
-      alert("Please fill in all required fields and select at least one platform.");
+    if (!taskName || !taskLink || !category || platforms.length === 0 || payout <= 0 || targetCompletions <= 0) {
+      alert("Please fill in all fields and select at least one platform.");
       return;
     }
 
-    const tags = tagsInput
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0);
+    const details = getCurrencyDetails(targetCountry);
+    const displayEarningRate = `${details.symbol}${payout.toFixed(2)} / action`;
 
-    const symbol = COUNTRY_CURRENCIES[targetCountry]?.symbol || '$';
-    const displayEarningRate = `${symbol}${costPerCompletion.toFixed(2)} / action`;
-
+    // Map simplified fields to the partnership lead model with sensible defaults
     submitPartnershipLead({
-      appName: name,
+      appName: taskName,
       category,
       platforms,
       earningRate: displayEarningRate,
-      averageEarningsPerDay: costPerCompletion,
-      description,
-      longDescription,
-      tags: tags.length > 0 ? tags : ['Bulk campaign', 'Verified partner'],
-      actionText: `Open ${name}`,
-      externalUrl,
+      averageEarningsPerDay: payout,
+      description: `Complete tasks in ${taskName} to earn rewards.`,
+      longDescription: `Get rewarded for completing actions on ${taskName}. Click start task to redirect and begin.`,
+      tags: [category, 'Promoted'],
+      actionText: `Open ${taskName}`,
+      externalUrl: taskLink,
       suggestedTasks: [],
-      targetCompletions,
-      costPerCompletion,
-      totalBudget: totalCampaignBudget,
+      targetCompletions: targetCompletions,
+      costPerCompletion: payout,
+      totalBudget: parseFloat((targetCompletions * payout).toFixed(2)),
       targetCountry: targetCountry,
-      currency: COUNTRY_CURRENCIES[targetCountry]?.currency || 'USD',
-      currencySymbol: symbol
+      currency: details.currency,
+      currencySymbol: details.symbol
     });
 
     setSuccess(true);
   };
 
   const handleReset = () => {
-    setName('');
+    setTaskName('');
     setCategory('Gaming');
-    setPlatforms([]);
-    setDescription('');
-    setLongDescription('');
-    setTagsInput('');
-    setExternalUrl('');
-    setTargetCompletions(1000);
-    setCostPerCompletion(0.50);
-    setSuccess(false);
     setTargetCountry('Global');
+    setTaskLink('');
+    setPlatforms([]);
+    setPayout(0.50);
+    setTargetCompletions(1000);
+    setSuccess(false);
   };
+
+  const details = getCurrencyDetails(targetCountry);
+  const symbol = details.symbol;
 
   return (
     <div className="partner-form-viewport">
       {success ? (
         <div className="partner-content-card success-card" style={{ textAlign: 'center', padding: '48px', maxWidth: '600px', margin: '0 auto' }}>
           <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: '20px' }}>🎉</span>
-          <h2 className="card-heading" style={{ fontSize: '1.8rem', marginBottom: '12px' }}>Partnership Request Submitted!</h2>
+          <h2 className="card-heading" style={{ fontSize: '1.8rem', marginBottom: '12px' }}>Campaign Lead Submitted!</h2>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 24px', lineHeight: 1.6 }}>
-            Your partnership lead for <strong>{name}</strong> has been registered. An administrator will review your suggested campaign and contact you shortly to create your official campaign.
+            Your campaign details for <strong>{taskName}</strong> have been submitted successfully. An administrator will review your campaign details and verify it shortly.
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
             <button onClick={handleReset} className="glow-btn-cyan">Create Another Campaign</button>
@@ -151,184 +111,135 @@ export default function CreatePartnerCampaign() {
           {/* Left Builder Form */}
           <div className="partner-content-card">
             <div className="card-header-section" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '24px' }}>
-              <h2 className="card-heading">Launch Bulk Campaign</h2>
-              <p className="card-subheading">Submit your app details to gain bulk conversions, installations, and key actions from genuine users.</p>
+              <h2 className="card-heading">Launch Campaign</h2>
+              <p className="card-subheading">Submit your campaign details to get conversions and installations from our global earning community.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="offer-form">
               
-              {/* BULK SPECIFICATIONS */}
-              <div className="form-section">
-                <h2 className="section-header">1. Bulk Volume & Sizing</h2>
-                <p className="section-desc">Define target conversions and budget size for your campaign.</p>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Target Conversions (Completions) *</label>
-                    <input 
-                      type="number" 
-                      min="100"
-                      step="50"
-                      value={targetCompletions} 
-                      onChange={(e) => setTargetCompletions(parseInt(e.target.value) || 0)} 
-                      required
-                    />
-                    <span className="input-helper">Minimum 100 completions.</span>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Payout Per Action ({COUNTRY_CURRENCIES[targetCountry]?.currency || 'USD'} {COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'}) *</label>
-                    <input 
-                      type="number" 
-                      min="0.05"
-                      step="0.05"
-                      value={costPerCompletion} 
-                      onChange={(e) => setCostPerCompletion(parseFloat(e.target.value) || 0)} 
-                      required
-                    />
-                    <span className="input-helper">Reward distributed per verified user action.</span>
-                  </div>
-                </div>
-
-                {/* Total budget display box */}
-                <div className="glass-card budget-calculator-box">
-                  <span className="budget-lbl">Total Estimated Budget</span>
-                  <strong className="budget-total-val">{COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'}{totalCampaignBudget.toFixed(2)}</strong>
-                  <span className="budget-calc-formula">({targetCompletions.toLocaleString()} completions &times; {COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'}{costPerCompletion.toFixed(2)} payout)</span>
-                </div>
+              <div className="form-group">
+                <label htmlFor="task-name">Task Name *</label>
+                <input 
+                  id="task-name"
+                  type="text" 
+                  value={taskName} 
+                  onChange={(e) => setTaskName(e.target.value)} 
+                  placeholder="e.g. Swagbucks Review, CoinMaster Install" 
+                  required
+                />
               </div>
 
-              {/* APP SPECIFICATIONS */}
-              <div className="form-section">
-                <h2 className="section-header">2. Application Specifications</h2>
-                
-                <div className="form-group">
-                  <label>Application Name *</label>
-                  <input 
-                    type="text" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    placeholder="e.g. MyMobileApp, CoinGame" 
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label htmlFor="campaign-category">Campaign Category *</label>
+                <select 
+                  id="campaign-category"
+                  value={category} 
+                  onChange={(e) => setCategory(e.target.value as any)}
+                >
+                  <option value="App Install & Sign Up">📲 App Install & Sign Up</option>
+                  <option value="LinkedIn Followers">👔 LinkedIn Followers</option>
+                  <option value="Google Maps Reviews">📍 Google Maps Reviews</option>
+                  <option value="Telegram Members">✈️ Telegram Members</option>
+                  <option value="WhatsApp Members">💬 WhatsApp Members</option>
+                  <option value="Instagram Followers">📸 Instagram Followers</option>
+                  <option value="Facebook Page Followers">👍 Facebook Page Followers</option>
+                  <option value="Youtube Subscribers">▶️ Youtube Subscribers</option>
+                  <option value="Trustpilot Reviews">⭐ Trustpilot Reviews</option>
+                  <option value="Justdial Reviews">📞 Justdial Reviews</option>
+                  <option value="Play Store Reviews">🤖 Play Store Reviews</option>
+                  <option value="Custom Task">⚙️ Custom Task</option>
+                  <option value="Gaming">🎮 Gaming (Game Installs & Levels)</option>
+                  <option value="Surveys">📋 Surveys (Demographics Opinion)</option>
+                  <option value="App Testing">🧪 App Testing (User Feedback)</option>
+                  <option value="Passive">💸 Passive Income (Idle Bandwidth)</option>
+                </select>
+              </div>
 
-                <div className="form-group">
-                  <label>App Target Link (Redirect URL) *</label>
-                  <input 
-                    type="url" 
-                    value={externalUrl} 
-                    onChange={(e) => setExternalUrl(e.target.value)} 
-                    placeholder="https://example.com/download-or-test" 
-                    required
-                  />
-                  <span className="input-helper">Link where users will perform actions (Play Store, App Store, Web page).</span>
-                </div>
+              <div className="form-group">
+                <label htmlFor="target-country">Target Country *</label>
+                <select 
+                  id="target-country"
+                  value={targetCountry} 
+                  onChange={(e) => setTargetCountry(e.target.value)}
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
+                >
+                  <option value="Global">🌍 Global (USD - $)</option>
+                  {countries.map(c => (
+                    <option key={c.name} value={c.name}>{c.flag} {c.name}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Campaign Category *</label>
-                    <select 
-                      value={category} 
-                      onChange={(e) => {
-                        const newCat = e.target.value as any;
-                        setCategory(newCat);
-                        const autoDesc = CATEGORY_DESCRIPTIONS[newCat];
-                        if (autoDesc) setDescription(autoDesc);
-                      }}
+              <div className="form-group">
+                <label htmlFor="task-link">Task Link (Redirect URL) *</label>
+                <input 
+                  id="task-link"
+                  type="url" 
+                  value={taskLink} 
+                  onChange={(e) => setTaskLink(e.target.value)} 
+                  placeholder="https://play.google.com/store/apps/details?id=..." 
+                  required
+                />
+                <span className="input-helper">The destination link where users will execute the campaign.</span>
+              </div>
+
+              <div className="form-group">
+                <label>Conversion Platform *</label>
+                <div className="checkbox-row" style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                  {[
+                    { value: 'iOS', label: 'App Store (iOS)' },
+                    { value: 'Android', label: 'Play Store (Android)' },
+                    { value: 'Web', label: 'Web Page' }
+                  ].map((plat) => (
+                    <div 
+                      key={plat.value} 
+                      onClick={() => togglePlatform(plat.value as any)}
+                      className={`checkbox-selector ${platforms.includes(plat.value as any) ? 'active' : ''}`}
+                      style={{ padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)', background: platforms.includes(plat.value as any) ? 'rgba(79,70,229,0.08)' : 'rgba(255,255,255,0.01)', color: platforms.includes(plat.value as any) ? 'var(--accent-indigo)' : 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}
                     >
-                      <option value="App Install & Sign Up">App Install & Sign Up</option>
-                      <option value="LinkedIn Followers">LinkedIn Followers</option>
-                      <option value="Google Maps Reviews">Google Maps Reviews</option>
-                      <option value="Telegram Members">Telegram Members</option>
-                      <option value="WhatsApp Members">WhatsApp Members</option>
-                      <option value="Instagram Followers">Instagram Followers</option>
-                      <option value="Facebook Page Followers">Facebook Page Followers</option>
-                      <option value="Youtube Subscribers">Youtube Subscribers</option>
-                      <option value="Trustpilot Reviews">Trustpilot Reviews</option>
-                      <option value="Justdial Reviews">Justdial Reviews</option>
-                      <option value="Play Store Reviews">Play Store Reviews</option>
-                      <option value="Custom Task">Custom Task</option>
-                      <option value="Gaming">Gaming (Game Installs & Levels)</option>
-                      <option value="Surveys">Surveys (Demographics Opinion)</option>
-                      <option value="App Testing">App Testing (User Feedback)</option>
-                      <option value="Passive">Passive Income (Idle Bandwidth)</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Supported Platforms (Select all that apply) *</label>
-                    <div className="checkbox-row">
-                      {[
-                        { value: 'iOS', label: 'App Store' },
-                        { value: 'Android', label: 'Android' }
-                      ].map((plat) => (
-                        <div 
-                          key={plat.value} 
-                          onClick={() => togglePlatform(plat.value as any)}
-                          className={`checkbox-selector ${platforms.includes(plat.value as any) ? 'active' : ''}`}
-                        >
-                          {platforms.includes(plat.value as any) ? '✓' : '+'} {plat.label}
-                        </div>
-                      ))}
+                      {platforms.includes(plat.value as any) ? '✓' : '+'} {plat.label}
                     </div>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Target Country *</label>
-                  <select 
-                    value={targetCountry} 
-                    onChange={(e) => setTargetCountry(e.target.value)}
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
-                  >
-                    {Object.keys(COUNTRY_CURRENCIES).map(country => (
-                      <option key={country} value={country}>{country} ({COUNTRY_CURRENCIES[country].currency} - {COUNTRY_CURRENCIES[country].symbol})</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Campaign Keywords (Comma separated)</label>
-                  <input 
-                    type="text" 
-                    value={tagsInput} 
-                    onChange={(e) => setTagsInput(e.target.value)} 
-                    placeholder="e.g. Fast install, Level 5, Survey (comma separated)"
-                  />
+                  ))}
                 </div>
               </div>
 
-              {/* COPY & CONTENT */}
-              <div className="form-section">
-                <h2 className="section-header">3. Instructions & Description</h2>
-                
-                <div className="form-group">
-                  <label>Short Pitch / Description *</label>
-                  <input 
-                    type="text" 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)} 
-                    placeholder="e.g. Install and play to level 10 to earn." 
-                    required
-                  />
-                </div>
+               <div className="form-group">
+                <label htmlFor="payout-per-conversion">Payout to Users per Conversion ({symbol}) *</label>
+                <input 
+                  id="payout-per-conversion"
+                  type="number" 
+                  min="0.01"
+                  step="0.05"
+                  value={payout} 
+                  onChange={(e) => setPayout(parseFloat(e.target.value) || 0)} 
+                  required
+                />
+                <span className="input-helper">Reward distributed directly to users for completing the conversion.</span>
+              </div>
 
-                <div className="form-group">
-                  <label>Detailed Steps & Guidelines *</label>
-                  <textarea 
-                    value={longDescription} 
-                    onChange={(e) => setLongDescription(e.target.value)} 
-                    placeholder="Describe details, eligibility, rules, and steps users need to follow on the external app."
-                    rows={4}
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label htmlFor="target-completions">Target Conversions (Completions) *</label>
+                <input 
+                  id="target-completions"
+                  type="number" 
+                  min="100"
+                  step="50"
+                  value={targetCompletions} 
+                  onChange={(e) => setTargetCompletions(parseInt(e.target.value) || 0)} 
+                  required
+                />
+                <span className="input-helper">Minimum 100 completions.</span>
+              </div>
+
+              <div className="glass-card budget-calculator-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(79, 70, 229, 0.03)', border: '1px solid rgba(79, 70, 229, 0.12)', borderRadius: '8px', padding: '16px', marginTop: '4px' }}>
+                <span className="budget-lbl" style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.05em', fontWeight: 600 }}>Estimated Campaign Cost</span>
+                <strong className="budget-total-val" style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: 'var(--accent-indigo)', margin: '4px 0' }}>{symbol}{(targetCompletions * payout).toFixed(2)}</strong>
+                <span className="budget-calc-formula" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>({targetCompletions.toLocaleString()} conversions &times; {symbol}{payout.toFixed(2)} payout)</span>
               </div>
 
               {/* Submit Button */}
-              <button type="submit" className="glow-btn-purple" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '16px' }}>
-                Submit Partnership Lead
+              <button type="submit" className="glow-btn-purple" style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '16px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                Submit Campaign Details
               </button>
             </form>
           </div>
@@ -413,10 +324,10 @@ export default function CreatePartnerCampaign() {
                       fontWeight: 'bold',
                       color: 'white'
                     }}>
-                      {name ? name.charAt(0).toUpperCase() : '?'}
+                      {taskName ? taskName.charAt(0).toUpperCase() : '?'}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <h5 style={{ margin: 0, fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>{name || 'Your App Name'}</h5>
+                      <h5 style={{ margin: 0, fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>{taskName || 'Your App Name'}</h5>
                       <span style={{
                         fontSize: '0.68rem',
                         padding: '1px 5px',
@@ -424,11 +335,11 @@ export default function CreatePartnerCampaign() {
                         color: '#a5b4fc',
                         borderRadius: '3px',
                         fontWeight: 600
-                      }}>{category}</span>
+                      }}>{getCategoryIcon(category)} {category}</span>
                     </div>
                   </div>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: '#9ca3af', lineHeight: 1.4 }}>
-                    {description || 'Provide a short pitch describing the main conversion flow.'}
+                    Complete tasks in {taskName || 'your campaign'} to earn rewards.
                   </p>
                 </div>
 
@@ -446,7 +357,7 @@ export default function CreatePartnerCampaign() {
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
                     <span style={{ color: '#9ca3af' }}>Payout Rate:</span>
-                    <strong style={{ color: '#10b981' }}>{COUNTRY_CURRENCIES[targetCountry]?.symbol || '$'}{costPerCompletion.toFixed(2)} / action</strong>
+                    <strong style={{ color: '#10b981' }}>{symbol}{payout.toFixed(2)} / action</strong>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
@@ -458,15 +369,15 @@ export default function CreatePartnerCampaign() {
                     <span style={{ color: '#9ca3af' }}>Platforms:</span>
                     <strong style={{ color: '#fff' }}>
                       {platforms.length > 0 
-                        ? platforms.map(p => p === 'iOS' ? 'App Store' : p).join(', ') 
+                        ? platforms.map(p => p === 'iOS' ? 'App Store' : p === 'Android' ? 'Android' : p).join(', ') 
                         : 'Select above'}
                     </strong>
                   </div>
 
                   <div style={{ borderTop: '1px solid #1f293d', paddingTop: '8px' }}>
                     <span style={{ fontSize: '0.72rem', color: '#9ca3af', display: 'block', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>Guidelines</span>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
-                      {longDescription || 'Describe details, rules, and steps for the campaign.'}
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', lineHeight: 1.4 }}>
+                      Get rewarded for completing actions on {taskName || 'your campaign'}. Click start task to redirect and begin.
                     </p>
                   </div>
                 </div>
@@ -489,7 +400,7 @@ export default function CreatePartnerCampaign() {
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}>
-                  {name ? `Get ${name}` : 'Download App'}
+                  {taskName ? `Get ${taskName}` : 'Download App'}
                 </button>
               </div>
             </div>
@@ -521,34 +432,10 @@ export default function CreatePartnerCampaign() {
           font-size: 0.85rem;
           color: var(--text-secondary);
         }
-
-        /* Forms configuration styling */
         .offer-form {
           display: flex;
           flex-direction: column;
-          gap: 32px;
-        }
-        .form-section {
-          border-bottom: 1px solid var(--border-color);
-          padding-bottom: 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        .form-section:last-of-type {
-          border-bottom: none;
-          padding-bottom: 0;
-        }
-        .section-header {
-          font-family: var(--font-display);
-          font-size: 1.15rem;
-          font-weight: 700;
-          color: var(--accent-indigo);
-        }
-        .section-desc {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          margin-top: -8px;
+          gap: 20px;
         }
         .form-group {
           display: flex;
@@ -579,11 +466,6 @@ export default function CreatePartnerCampaign() {
           border-color: var(--accent-indigo);
           background: rgba(255, 255, 255, 0.04);
         }
-        .form-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
         @media (max-width: 768px) {
           .builder-split-layout {
             grid-template-columns: 1fr !important;
@@ -592,11 +474,6 @@ export default function CreatePartnerCampaign() {
             position: relative !important;
             top: 0 !important;
             margin-top: 24px;
-          }
-        }
-        @media (max-width: 600px) {
-          .form-row {
-            grid-template-columns: 1fr;
           }
         }
         .input-helper {
@@ -623,91 +500,9 @@ export default function CreatePartnerCampaign() {
           border-color: var(--border-hover);
         }
         .checkbox-selector.active {
-          border-color: var(--accent-indigo);
-          background: rgba(79, 70, 229, 0.06);
-          color: var(--accent-indigo);
-        }
-        .added-tasks-container {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        .task-preview-chip {
-          background: rgba(255, 255, 255, 0.01);
-          border: 1px solid var(--border-color);
-          padding: 12px 14px;
-          border-radius: 6px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-        }
-        .task-reward-preview {
-          margin-left: 8px;
-          color: var(--accent-emerald);
-          font-family: var(--font-display);
-          font-weight: 700;
-        }
-        .task-desc-preview {
-          font-size: 0.78rem;
-          color: var(--text-muted);
-          margin-top: 2px;
-        }
-        .remove-task-btn {
-          background: transparent;
-          border: none;
-          color: rgba(239, 68, 68, 0.6);
-          font-size: 1rem;
-          cursor: pointer;
-        }
-        .remove-task-btn:hover {
-          color: rgba(239, 68, 68, 1);
-        }
-        .task-builder-subform {
-          padding: 16px;
-          background: rgba(0,0,0,0.02);
-          border: 1px solid var(--border-color);
-          border-radius: 6px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .task-builder-subform h3 {
-          font-family: var(--font-display);
-          font-size: 0.95rem;
-          font-weight: 700;
-        }
-        .budget-calculator-box {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          background: rgba(79, 70, 229, 0.03);
-          border: 1px solid rgba(79, 70, 229, 0.12);
-          border-radius: 6px;
-          padding: 16px;
-        }
-        .budget-lbl {
-          font-size: 0.72rem;
-          text-transform: uppercase;
-          color: var(--text-secondary);
-          letter-spacing: 0.05em;
-          font-weight: 600;
-        }
-        .budget-total-val {
-          font-family: var(--font-display);
-          font-size: 2rem;
-          font-weight: 900;
-          color: var(--accent-indigo);
-          margin: 4px 0;
-        }
-        .budget-calc-formula {
-          font-size: 0.78rem;
-          color: var(--text-muted);
-        }
-        .preset-card:hover {
-          background: rgba(79, 70, 229, 0.05) !important;
-          border-color: var(--border-hover) !important;
-          transform: translateY(-2px);
+          border-color: var(--accent-indigo) !important;
+          background: rgba(79, 70, 229, 0.06) !important;
+          color: var(--accent-indigo) !important;
         }
         .phone-screen-scroll::-webkit-scrollbar {
           width: 4px;
@@ -715,6 +510,15 @@ export default function CreatePartnerCampaign() {
         .phone-screen-scroll::-webkit-scrollbar-thumb {
           background: #1f293d;
           border-radius: 2px;
+        }
+        /* Disable number input spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
         }
       `}</style>
     </div>

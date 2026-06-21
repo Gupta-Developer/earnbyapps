@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 
 export default function PartnerLayout({ children }: { children: React.ReactNode }) {
-  const { userRole } = useApp();
+  const { userRole, userProfile } = useApp();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -23,13 +23,29 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     localStorage.setItem('partner-sidebar-collapsed', String(newVal));
   };
 
-  if (userRole !== 'user') {
+  if (userRole !== 'user' || !userProfile) {
     return (
       <main className="partner-denied-container">
         <div className="glass-card restriction-card">
           <span className="restriction-icon">🔒</span>
-          <h2>Access Denied</h2>
-          <p>You must select the <strong>Standard User</strong> role from the top-right account menu to access this partner campaign manager.</p>
+          <h2>
+            {userRole !== 'user' ? 'Access Denied' : 'Profile Setup Required'}
+          </h2>
+          <p>
+            {userRole !== 'user' 
+              ? 'You must select the User role from the top-right account menu to access this partner campaign manager.'
+              : 'Please complete your account profile details to manage and submit campaign leads.'
+            }
+          </p>
+          {userRole === 'user' && (
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('open-profile-modal'))}
+              className="glow-btn-purple"
+              style={{ marginTop: '20px', padding: '10px 24px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+            >
+              🔐 Setup Profile Details
+            </button>
+          )}
         </div>
         <style>{`
           .partner-denied-container {
@@ -47,6 +63,9 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
             border: 1px solid var(--border-color);
             border-radius: 12px;
             box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
           }
           .restriction-icon {
             font-size: 3rem;
@@ -129,7 +148,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
           <h1 className="active-tab-title">{activeTitle}</h1>
           <div className="partner-profile-display">
             <span className="partner-avatar">👤</span>
-            <span className="partner-profile-name">Hi, Partner User</span>
+            <span className="partner-profile-name">Hi, {userProfile?.fullName || 'Partner User'}</span>
           </div>
         </header>
 

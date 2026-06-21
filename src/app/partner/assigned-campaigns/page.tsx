@@ -64,7 +64,7 @@ export default function PartnerAssignedCampaigns() {
       .filter(app => app.id.startsWith('custom-'))
       .map(app => {
         // Calculate completions and budget info based on typical target metrics
-        const target = 1000;
+        const target = app.targetCompletions || 1000;
         const rateVal = parseFloat(app.earningRate.replace(/[^0-9.]/g, '')) || 0.5;
         const budget = target * rateVal;
         return {

@@ -43,7 +43,7 @@ export default function Home() {
         
         {/* Capsule Badge */}
         <div className="hero-capsule">
-          Powering User Acquisition
+          Powering User Acquisition Globally
         </div>
 
         {/* Main Header title */}
@@ -81,11 +81,12 @@ export default function Home() {
 
       <style>{`
         .landing-page-main {
-          min-height: calc(100vh - 200px);
+          min-height: calc(100vh - 160px);
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 80px 24px;
+          padding: 20px 24px;
+          box-sizing: border-box;
         }
         .landing-content-container {
           max-width: 800px;
@@ -94,6 +95,7 @@ export default function Home() {
           display: flex;
           flex-direction: column;
           align-items: center;
+          gap: 16px;
         }
         .landing-hero-subtitle {
           display: flex;
@@ -101,15 +103,16 @@ export default function Home() {
           align-items: center;
           width: 100%;
           max-width: 700px;
-          margin: 0 auto 8px;
+          margin: 0 auto;
           font-size: 1.25rem;
           color: var(--text-secondary);
-          line-height: 1.6;
+          line-height: 1.4;
         }
         .landing-hero-tagline {
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           color: var(--text-muted);
-          margin-bottom: 40px;
+          margin-top: -8px;
+          margin-bottom: 12px;
           font-weight: 500;
           opacity: 0.85;
           letter-spacing: 0.02em;

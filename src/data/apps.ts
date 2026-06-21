@@ -25,6 +25,8 @@ export interface EarningApp {
   targetCountry?: string;
   currency?: string;
   currencySymbol?: string;
+  targetCompletions?: number;
+  videoUrl?: string;
 }
 
 export const EARNING_APPS: EarningApp[] = [
@@ -149,3 +151,46 @@ export const EARNING_APPS: EarningApp[] = [
     ]
   }
 ];
+
+export const getCategoryIcon = (category: string): string => {
+  switch (category) {
+    case 'Gaming':
+    case 'Gaming (Game Installs & Levels)':
+      return '🎮';
+    case 'Surveys':
+    case 'Surveys (Demographics Opinion)':
+      return '📋';
+    case 'App Testing':
+    case 'App Testing (User Feedback)':
+      return '🧪';
+    case 'Passive':
+    case 'Passive Income (Idle Bandwidth)':
+      return '💸';
+    case 'App Install & Sign Up':
+      return '📲';
+    case 'LinkedIn Followers':
+      return '👔';
+    case 'Google Maps Reviews':
+      return '📍';
+    case 'Telegram Members':
+      return '✈️';
+    case 'WhatsApp Members':
+      return '💬';
+    case 'Instagram Followers':
+      return '📸';
+    case 'Facebook Page Followers':
+      return '👍';
+    case 'Youtube Subscribers':
+      return '▶️';
+    case 'Trustpilot Reviews':
+      return '⭐';
+    case 'Justdial Reviews':
+      return '📞';
+    case 'Play Store Reviews':
+      return '🤖';
+    case 'Custom Task':
+      return '⚙️';
+    default:
+      return '📝';
+  }
+};

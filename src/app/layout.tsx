@@ -3,6 +3,7 @@ import "./globals.css";
 import { AppContextProvider } from "../context/AppContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import UserProfileModal from "../components/UserProfileModal";
 
 export const metadata: Metadata = {
   title: "EarnByApps | Discover Premium Money Earning Apps",
@@ -26,6 +27,9 @@ export default function RootLayout({
 
           {/* Global Client Navigation Header */}
           <Header />
+
+          {/* User profile collection modal */}
+          <UserProfileModal />
 
           {children}
 

@@ -1,11 +1,36 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../../context/AppContext';
 
 export default function PartnerOverview() {
-  const { partnershipLeads } = useApp();
-  const pendingCount = partnershipLeads.filter(l => l.status === 'New').length;
+  const { partnershipLeads, apps } = useApp();
+
+  // 1. Total Campaigns (total campaign leads submitted by the partner)
+  const totalCampaignsCount = partnershipLeads.length;
+
+  // 2. Assigned Campaigns (mockAssigned + custom approved campaigns)
+  const mockAssigned = useMemo(() => [
+    { targetCompletions: 3000, completedCompletions: 1840 },
+    { targetCompletions: 5000, completedCompletions: 2150 }
+  ], []);
+
+  const liveCustom = useMemo(() => {
+    return apps
+      .filter(app => app.id.startsWith('custom-'))
+      .map(app => ({
+        targetCompletions: 1000,
+        completedCompletions: Math.floor(1000 * 0.18) // mock 18% progress
+      }));
+  }, [apps]);
+
+  const allAssigned = useMemo(() => [...liveCustom, ...mockAssigned], [liveCustom, mockAssigned]);
+  const assignedCampaignsCount = allAssigned.length;
+
+  // 3. Completion rate = sum of completedCompletions / sum of targetCompletions
+  const totalTarget = useMemo(() => allAssigned.reduce((acc, c) => acc + c.targetCompletions, 0), [allAssigned]);
+  const totalCompleted = useMemo(() => allAssigned.reduce((acc, c) => acc + c.completedCompletions, 0), [allAssigned]);
+  const completionRate = useMemo(() => totalTarget > 0 ? (totalCompleted / totalTarget) * 100 : 0, [totalCompleted, totalTarget]);
 
   return (
     <div className="partner-content-card">
@@ -16,30 +41,68 @@ export default function PartnerOverview() {
 
       <div className="analytics-mock-grid">
         <div className="analytics-mini-card">
-          <span className="mini-lbl">Total Spent Budget</span>
-          <strong className="mini-val">$1,250.00</strong>
-          <span className="mini-change green-txt">✓ Active conversions paid</span>
+          <span className="mini-lbl">Total Campaigns</span>
+          <strong className="mini-val">{totalCampaignsCount}</strong>
+          <span className="mini-change green-txt">✓ Leads submitted</span>
+        </div>
+        <div className="analytics-mini-card">
+          <span className="mini-lbl">Assigned Campaigns</span>
+          <strong className="mini-val">{assignedCampaignsCount}</strong>
+          <span className="mini-change green-txt">▲ Running live</span>
+        </div>
+        <div className="analytics-mini-card">
+          <span className="mini-lbl">Completion Rate</span>
+          <strong className="mini-val">{completionRate.toFixed(1)}%</strong>
+          <span className="mini-change">Overall task progress</span>
         </div>
         <div className="analytics-mini-card">
           <span className="mini-lbl">Conversions Delivered</span>
-          <strong className="mini-val">2,450 / 5,000</strong>
-          <span className="mini-change green-txt">▲ 49% progress</span>
-        </div>
-        <div className="analytics-mini-card">
-          <span className="mini-lbl">Active Campaigns</span>
-          <strong className="mini-val">3</strong>
-          <span className="mini-change">Running on Offerwall</span>
-        </div>
-        <div className="analytics-mini-card">
-          <span className="mini-lbl">Pending Review</span>
-          <strong className="mini-val">{pendingCount}</strong>
-          <span className="mini-change">Awaiting moderation</span>
+          <strong className="mini-val">{totalCompleted.toLocaleString()} / {totalTarget.toLocaleString()}</strong>
+          <span className="mini-change">Delivered targets</span>
         </div>
       </div>
 
-      <div className="placeholder-chart-block">
-        <span>📈</span>
-        <p>Mock conversion traffic details are syncing from developer API daemons.</p>
+      {/* Performance Tips Section */}
+      <div className="performance-tips-container">
+        <div className="tips-header">
+          <span className="tips-icon">💡</span>
+          <div>
+            <h3 className="tips-heading">Performance Tips</h3>
+            <p className="tips-subheading">Bring Out Better Results From Each Campaign</p>
+          </div>
+        </div>
+
+        <div className="tips-grid">
+          <div className="tip-card">
+            <div className="tip-card-header">
+              <span className="tip-card-icon bold-icon">📝</span>
+              <h4>Define Clear Instructions</h4>
+            </div>
+            <p className="tip-card-desc">
+              Make instructions simple and use <strong>HTML Code</strong> in instructions for best making text <strong>Bold</strong>, Attaching Samples etc.
+            </p>
+          </div>
+
+          <div className="tip-card">
+            <div className="tip-card-header">
+              <span className="tip-card-icon verify-icon">🔍</span>
+              <h4>Properly Verify Submissions</h4>
+            </div>
+            <p className="tip-card-desc">
+              Monitor user submitted proofs as soon as possible. And provide clear reason if requesting resubmit.
+            </p>
+          </div>
+
+          <div className="tip-card">
+            <div className="tip-card-header">
+              <span className="tip-card-icon reward-icon">💎</span>
+              <h4>Maximize Users Reward</h4>
+            </div>
+            <p className="tip-card-desc">
+              Don't pay tiny amount to users for task completion, pay them better than competitors to get your gig done much faster.
+            </p>
+          </div>
+        </div>
       </div>
 
       <style>{`
@@ -103,19 +166,92 @@ export default function PartnerOverview() {
         .green-txt {
           color: var(--accent-emerald) !important;
         }
-        .placeholder-chart-block {
-          background: rgba(255,255,255,0.01);
-          border: 1px dashed var(--border-color);
-          border-radius: 8px;
-          padding: 80px 40px;
-          text-align: center;
-          color: var(--text-secondary);
+
+        /* Performance Tips Styling */
+        .performance-tips-container {
+          background: rgba(255, 255, 255, 0.01);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          padding: 24px;
+          margin-top: 16px;
         }
-        .placeholder-chart-block span {
-          font-size: 3rem;
-          display: block;
-          margin-bottom: 12px;
-          opacity: 0.5;
+        .tips-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 20px;
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 16px;
+        }
+        .tips-icon {
+          font-size: 1.8rem;
+        }
+        .tips-heading {
+          font-family: var(--font-display);
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin: 0 0 2px 0;
+        }
+        .tips-subheading {
+          font-size: 0.85rem;
+          color: var(--accent-indigo);
+          margin: 0;
+          font-weight: 600;
+        }
+        .tips-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+        }
+        .tip-card {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 18px;
+          transition: all 0.2s ease-in-out;
+        }
+        .tip-card:hover {
+          transform: translateY(-2px);
+          border-color: var(--accent-indigo);
+          background: rgba(79, 70, 229, 0.03);
+          box-shadow: 0 4px 20px rgba(79, 70, 229, 0.05);
+        }
+        .tip-card-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .tip-card-header h4 {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+        .tip-card-icon {
+          font-size: 1.1rem;
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+        }
+        .bold-icon {
+          background: rgba(6, 182, 212, 0.1);
+        }
+        .verify-icon {
+          background: rgba(245, 158, 11, 0.1);
+        }
+        .reward-icon {
+          background: rgba(16, 185, 129, 0.1);
+        }
+        .tip-card-desc {
+          font-size: 0.8rem;
+          line-height: 1.5;
+          color: var(--text-secondary);
+          margin: 0;
         }
       `}</style>
     </div>

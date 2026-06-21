@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { getCategoryIcon } from '../../../data/apps';
 
 export default function PartnershipLeadsPage() {
   const { apps, partnershipLeads, updateLeadStatus } = useApp();
@@ -14,7 +15,7 @@ export default function PartnershipLeadsPage() {
       <div className="submissions-panel">
         <div className="card-header-section">
           <h2 className="card-heading">Partnership Leads ({partnershipLeads.length})</h2>
-          <p className="card-subheading">Review proposed campaigns submitted by standard users for partnership.</p>
+          <p className="card-subheading">Review proposed campaigns submitted by users for partnership.</p>
         </div>
 
         <div className="pending-moderation-list">
@@ -29,7 +30,7 @@ export default function PartnershipLeadsPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <strong style={{ display: 'block', fontSize: '1rem' }}>{lead.appName}</strong>
-                    <span className="app-cat-badge">{lead.category}</span>
+                    <span className="app-cat-badge">{getCategoryIcon(lead.category)} {lead.category}</span>
                     <span style={{
                       display: 'inline-block',
                       padding: '2px 6px',
@@ -38,13 +39,13 @@ export default function PartnershipLeadsPage() {
                       fontWeight: 'bold',
                       marginLeft: '8px',
                       background: 
-                        lead.status === 'New' ? 'rgba(245,158,11,0.1)' : 
-                        lead.status === 'Contacted' ? 'rgba(59,130,246,0.1)' :
-                        lead.status === 'Converted' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                      color: 
-                        lead.status === 'New' ? '#f59e0b' : 
-                        lead.status === 'Contacted' ? '#3b82f6' :
-                        lead.status === 'Converted' ? 'var(--accent-emerald)' : '#ef4444'
+                      lead.status === 'New' ? 'rgba(245,158,11,0.1)' : 
+                      lead.status === 'Contacted' ? 'rgba(59,130,246,0.1)' :
+                      lead.status === 'Converted' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                    color: 
+                      lead.status === 'New' ? '#f59e0b' : 
+                      lead.status === 'Contacted' ? '#3b82f6' :
+                      lead.status === 'Converted' ? 'var(--accent-emerald)' : '#ef4444'
                     }}>{lead.status}</span>
                   </div>
                   <span style={{ color: 'var(--accent-emerald)', fontWeight: 700 }}>{lead.earningRate}</span>
@@ -65,7 +66,7 @@ export default function PartnershipLeadsPage() {
             <div key={app.id} className="active-campaign-row">
               <div>
                 <strong>{app.name}</strong>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px' }}>({app.category})</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px' }}>({getCategoryIcon(app.category)} {app.category})</span>
               </div>
               <span style={{ color: 'var(--accent-emerald)', fontSize: '0.9rem', fontWeight: 600 }}>{app.earningRate}</span>
             </div>

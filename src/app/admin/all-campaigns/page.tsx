@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { getCategoryIcon } from '../../../data/apps';
 
 export default function AdminAllCampaigns() {
   const { apps } = useApp();
@@ -54,7 +55,7 @@ export default function AdminAllCampaigns() {
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Rating: {app.rating} ★ ({app.reviewsCount} reviews)</span>
                   </td>
                   <td>
-                    <span className="app-cat-badge">{app.category}</span>
+                    <span className="app-cat-badge">{getCategoryIcon(app.category)} {app.category}</span>
                   </td>
                   <td>
                     <span style={{ fontSize: '0.8rem' }}>{app.platforms.join(', ')}</span>
