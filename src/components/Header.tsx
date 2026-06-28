@@ -56,8 +56,17 @@ export default function Header() {
             <button 
               className="role-selector-btn" 
               onClick={() => setShowAuthDropdown(!showAuthDropdown)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <span>👤</span>
+              {session && session.user?.image ? (
+                <img 
+                  src={session.user.image} 
+                  alt="User avatar" 
+                  style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <span>👤</span>
+              )}
               <span className="role-text-lbl">
                 {userRole === 'user' && userProfile ? userProfile.fullName : userRole}
               </span>
@@ -85,7 +94,18 @@ export default function Header() {
                 {session && session.user ? (
                   <div style={{ padding: '8px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid var(--border-color)', margin: '4px 0' }}>
                     <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px' }}>Google Account</div>
-                    <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>👤 {session.user.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
+                      {session.user.image ? (
+                        <img 
+                          src={session.user.image} 
+                          alt="Google avatar" 
+                          style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} 
+                        />
+                      ) : (
+                        <span>👤</span>
+                      )}
+                      <span>{session.user.name}</span>
+                    </div>
                     <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📧 {session.user.email}</div>
                     <button 
                       onClick={() => {
