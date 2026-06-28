@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
+import { useSession } from 'next-auth/react';
 
 export default function PartnerLayout({ children }: { children: React.ReactNode }) {
   const { userRole, userProfile } = useApp();
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -133,8 +135,16 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         <header className="viewport-header-bar">
           <h1 className="active-tab-title">{activeTitle}</h1>
           <div className="partner-profile-display">
-            <span className="partner-avatar">👤</span>
-            <span className="partner-profile-name">Hi, {userProfile?.fullName || 'Partner User'}</span>
+            {session && session.user?.image ? (
+              <img 
+                src={session.user.image} 
+                alt="Partner avatar" 
+                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
+              />
+            ) : (
+              <span className="partner-avatar">👤</span>
+            )}
+            <span className="partner-profile-name">Hi, {session?.user?.name || userProfile?.fullName || 'Partner User'}</span>
           </div>
         </header>
 

@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
+import { useSession } from 'next-auth/react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { userRole } = useApp();
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -137,8 +139,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="viewport-header-bar">
           <h1 className="active-tab-title">{activeTitle}</h1>
           <div className="admin-profile-display">
-            <span className="admin-avatar">👤</span>
-            <span className="admin-profile-name">Hi, Admin User</span>
+            {session && session.user?.image ? (
+              <img 
+                src={session.user.image} 
+                alt="Admin avatar" 
+                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
+              />
+            ) : (
+              <span className="admin-avatar">👤</span>
+            )}
+            <span className="admin-profile-name">Hi, {session?.user?.name || 'Admin User'}</span>
           </div>
         </header>
 

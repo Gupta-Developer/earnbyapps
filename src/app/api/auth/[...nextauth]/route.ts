@@ -19,7 +19,7 @@ const handler = NextAuth({
           if (existingUsers.length === 0) {
             // User doesn't exist, insert them!
             const fullName = user.name || 'Google User';
-            const role = user.email === 'admin@earnbyapps.com' || user.email === 'mayank.gupta.dev.1@gmail.com' ? 'admin' : 'user';
+            const role = user.email === 'admin@earnbyapps.com' || user.email === 'mayank.gupta.dev.1@gmail.com' || user.email === 'aashish.gupta.mails@gmail.com' ? 'admin' : 'user';
             
             await sql`
               INSERT INTO users (email, full_name, role, balance)
@@ -42,12 +42,12 @@ const handler = NextAuth({
             (session.user as any).role = dbUsers[0].role;
             (session.user as any).balance = Number(dbUsers[0].balance);
           } else {
-            const isAdmin = session.user.email === 'admin@earnbyapps.com' || session.user.email === 'mayank.gupta.dev.1@gmail.com';
+            const isAdmin = session.user.email === 'admin@earnbyapps.com' || session.user.email === 'mayank.gupta.dev.1@gmail.com' || session.user.email === 'aashish.gupta.mails@gmail.com';
             (session.user as any).role = isAdmin ? 'admin' : 'user';
           }
         } catch (err) {
           console.error("Error retrieving user session role from database:", err);
-          const isAdmin = session.user.email === 'admin@earnbyapps.com' || session.user.email === 'mayank.gupta.dev.1@gmail.com';
+          const isAdmin = session.user.email === 'admin@earnbyapps.com' || session.user.email === 'mayank.gupta.dev.1@gmail.com' || session.user.email === 'aashish.gupta.mails@gmail.com';
           (session.user as any).role = isAdmin ? 'admin' : 'user';
         }
       }
