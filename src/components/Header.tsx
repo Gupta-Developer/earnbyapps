@@ -20,10 +20,6 @@ export default function Header() {
     return null;
   }
 
-  const handleRoleChange = (role: UserRole) => {
-    login(role);
-    setShowAuthDropdown(false);
-  };
 
   return (
     <header className="site-header">
@@ -75,21 +71,6 @@ export default function Header() {
 
             {showAuthDropdown && (
               <div className="glass-card auth-dropdown">
-                <div className="dropdown-title">Moderator Simulator</div>
-                <button 
-                  onClick={() => handleRoleChange('user')} 
-                  className={`dropdown-item ${userRole === 'user' ? 'active' : ''}`}
-                >
-                  User (Submit Leads)
-                </button>
-                <button 
-                  onClick={() => handleRoleChange('admin')} 
-                  className={`dropdown-item ${userRole === 'admin' ? 'active' : ''}`}
-                >
-                  Admin (Approve Leads)
-                </button>
-
-                <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-color)' }}></div>
 
                 {session && session.user ? (
                   <div style={{ padding: '8px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid var(--border-color)', margin: '4px 0' }}>
