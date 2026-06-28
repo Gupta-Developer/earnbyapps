@@ -1,10 +1,18 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { EarningApp, EARNING_APPS, AppTask } from '../data/apps';
+import { useSession } from 'next-auth/react';
+import { EarningApp, EARNING_APPS, ReferralSlot } from '../data/apps';
 
 export type UserRole = 'user' | 'admin';
 export type AppTheme = 'light' | 'dark';
+
+export interface AppTask {
+  id: string;
+  title: string;
+  description: string;
+  reward: number;
+}
 
 export interface UserProfile {
   fullName: string;
@@ -41,12 +49,41 @@ export interface PartnershipLead {
   currencySymbol?: string;
 }
 
+export interface VerificationAssignment {
+  id: string;
+  campaignId: string;
+  userEmail: string;
+  startDateTime: string; // ISO String
+  endDateTime: string;   // ISO String
+}
+
+export interface Submission {
+  id: string;
+  userName: string;
+  userEmail: string;
+  appName: string;
+  appId: string;
+  taskId?: string;
+  taskTitle?: string;
+  reward: number;
+  proof: string;
+  proofType?: 'image' | 'video' | 'text';
+  proofUrl?: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  time: string;
+  verifierEmail: string; // 'admin' or user's email
+  verificationType: 'admin' | 'creator';
+  referralSlotId?: string;
+}
+
 interface AppContextType {
   userRole: UserRole;
   userProfile: UserProfile | null;
   apps: EarningApp[];
   pendingApps: EarningApp[];
   partnershipLeads: PartnershipLead[];
+  submissions: Submission[];
+  verificationAssignments: VerificationAssignment[];
   walletBalance: number;
   completedTaskIds: string[];
   theme: AppTheme;
@@ -60,7 +97,15 @@ interface AppContextType {
   claimTask: (taskId: string, reward: number) => void;
   toggleTheme: () => void;
   updateUserProfile: (profile: UserProfile | null) => void;
+  addVerificationAssignment: (assignment: Omit<VerificationAssignment, 'id'>) => void;
+  removeVerificationAssignment: (id: string) => void;
+  addReferralSlotToCampaign: (appId: string, slot: Omit<ReferralSlot, 'id' | 'completedCount'>) => void;
+  removeReferralSlot: (appId: string, slotId: string) => void;
+  submitTaskCompletion: (appId: string, proof: string, proofType?: 'image' | 'video' | 'text', proofUrl?: string) => void;
+  approveSubmission: (submissionId: string) => void;
+  rejectSubmission: (submissionId: string) => void;
 }
+
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -89,16 +134,42 @@ const INITIAL_LEADS: PartnershipLead[] = [
   }
 ];
 
+const INITIAL_SUBMISSIONS: Submission[] = [
+  { id: 'sub-1', userName: 'Test User', userEmail: 'user@example.com', appName: 'Swagbucks', appId: 'swagbucks', taskId: 'sb-2', taskTitle: 'Take Daily Gold Survey', reward: 2.50, proof: 'Completed survey gold #4321', time: '10 mins ago', status: 'Pending', verifierEmail: 'admin', verificationType: 'admin' },
+  { id: 'sub-2', userName: 'Raj Patel', userEmail: 'raj@gmail.com', appName: 'Mistplay', appId: 'mistplay', taskId: 'mp-2', taskTitle: 'Reach Level 10 in Raid Shadow Legends', reward: 6.50, proof: 'Profile level screenshot uploaded', time: '1 hour ago', status: 'Pending', verifierEmail: 'admin', verificationType: 'admin' },
+  { id: 'sub-3', userName: 'Sonia Sharma', userEmail: 'sonia@gmail.com', appName: 'Prime Opinion', appId: 'primeopinion', taskId: 'po-2', taskTitle: 'Reach Level 2', reward: 1.00, proof: 'Verified level 2 dashboard screenshot', time: '4 hours ago', status: 'Approved', verifierEmail: 'admin', verificationType: 'admin' },
+  { id: 'sub-4', userName: 'Amit Verma', userEmail: 'amit@gmail.com', appName: 'Honeygain', appId: 'honeygain', taskId: 'hg-2', taskTitle: 'Share First 10GB of Data', reward: 2.50, proof: 'Client ID: hg_98248924823', time: '1 day ago', status: 'Approved', verifierEmail: 'admin', verificationType: 'admin' }
+];
+
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
   const [userRole, setUserRole] = useState<UserRole>('user');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [apps, setApps] = useState<EarningApp[]>([]);
   const [pendingApps, setPendingApps] = useState<EarningApp[]>([]);
   const [partnershipLeads, setPartnershipLeads] = useState<PartnershipLead[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [verificationAssignments, setVerificationAssignments] = useState<VerificationAssignment[]>([]);
   const [walletBalance, setWalletBalance] = useState<number>(124.50);
   const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
   const [theme, setTheme] = useState<AppTheme>('dark');
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Sync Google session with AppContext user profile and role
+  useEffect(() => {
+    if (session && session.user) {
+      setUserProfile({
+        fullName: session.user.name || 'Google User',
+        email: session.user.email || 'user@example.com',
+        phone: '',
+        gender: '',
+        country: 'India',
+        paymentMethod: 'UPI ID',
+        paymentDetails: 'user@bank'
+      });
+      setUserRole((session.user as any).role || 'user');
+    }
+  }, [session]);
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -108,6 +179,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       const storedApps = localStorage.getItem('eb_apps');
       const storedPending = localStorage.getItem('eb_pending');
       const storedLeads = localStorage.getItem('eb_leads');
+      const storedSubmissions = localStorage.getItem('eb_submissions');
+      const storedAssignments = localStorage.getItem('eb_assignments');
       const storedWallet = localStorage.getItem('eb_wallet');
       const storedCompleted = localStorage.getItem('eb_completed');
       const storedTheme = localStorage.getItem('eb_theme') as AppTheme;
@@ -117,9 +190,23 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       } else {
         setUserRole('user');
       }
+      
+      // Auto-assign a default user profile details if they are in User role but don't have one
       if (storedProfile) {
         setUserProfile(JSON.parse(storedProfile));
+      } else {
+        const defaultProfile: UserProfile = {
+          fullName: 'Normal User',
+          email: 'user@example.com',
+          phone: '9876543210',
+          gender: 'Male',
+          country: 'India',
+          paymentMethod: 'UPI ID',
+          paymentDetails: 'user@bank'
+        };
+        setUserProfile(defaultProfile);
       }
+
       if (storedTheme) {
         setTheme(storedTheme);
       } else {
@@ -142,12 +229,26 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         localStorage.setItem('eb_leads', JSON.stringify(INITIAL_LEADS));
       }
 
+      if (storedSubmissions) {
+        setSubmissions(JSON.parse(storedSubmissions));
+      } else {
+        setSubmissions(INITIAL_SUBMISSIONS);
+        localStorage.setItem('eb_submissions', JSON.stringify(INITIAL_SUBMISSIONS));
+      }
+
+      if (storedAssignments) {
+        setVerificationAssignments(JSON.parse(storedAssignments));
+      } else {
+        setVerificationAssignments([]);
+      }
+
       if (storedWallet) setWalletBalance(parseFloat(storedWallet));
       if (storedCompleted) setCompletedTaskIds(JSON.parse(storedCompleted));
     } catch (e) {
       console.error("Failed to load local storage state:", e);
       setApps(EARNING_APPS);
       setPartnershipLeads(INITIAL_LEADS);
+      setSubmissions(INITIAL_SUBMISSIONS);
     }
     setIsInitialized(true);
   }, []);
@@ -189,6 +290,16 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!isInitialized) return;
+    localStorage.setItem('eb_submissions', JSON.stringify(submissions));
+  }, [submissions, isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    localStorage.setItem('eb_assignments', JSON.stringify(verificationAssignments));
+  }, [verificationAssignments, isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
     localStorage.setItem('eb_wallet', walletBalance.toString());
   }, [walletBalance, isInitialized]);
 
@@ -205,6 +316,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       localStorage.removeItem('eb_profile');
     }
   }, [userProfile, isInitialized]);
+
 
   const login = (role: UserRole) => {
     setUserRole(role);
@@ -275,6 +387,133 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
+  const addVerificationAssignment = (assignment: Omit<VerificationAssignment, 'id'>) => {
+    const newAssignment: VerificationAssignment = {
+      ...assignment,
+      id: `assignment-${Date.now()}`
+    };
+    setVerificationAssignments(prev => [...prev, newAssignment]);
+  };
+
+  const removeVerificationAssignment = (id: string) => {
+    setVerificationAssignments(prev => prev.filter(a => a.id !== id));
+  };
+
+  const addReferralSlotToCampaign = (appId: string, slot: Omit<ReferralSlot, 'id' | 'completedCount'>) => {
+    setApps(prev => prev.map(app => {
+      if (app.id === appId) {
+        const newSlot: ReferralSlot = {
+          ...slot,
+          id: `slot-${Date.now()}`,
+          completedCount: 0
+        };
+        return {
+          ...app,
+          referralPool: [...(app.referralPool || []), newSlot]
+        };
+      }
+      return app;
+    }));
+  };
+
+  const removeReferralSlot = (appId: string, slotId: string) => {
+    setApps(prev => prev.map(app => {
+      if (app.id === appId) {
+        return {
+          ...app,
+          referralPool: (app.referralPool || []).filter(s => s.id !== slotId)
+        };
+      }
+      return app;
+    }));
+  };
+
+  const submitTaskCompletion = (appId: string, proof: string, proofType?: 'image' | 'video' | 'text', proofUrl?: string) => {
+    const targetApp = apps.find(a => a.id === appId);
+    if (!targetApp) return;
+
+    let verifierEmail = 'admin';
+    let verificationType: 'admin' | 'creator' = 'admin';
+    let referralSlotId: string | undefined;
+
+    // Check verification assignment schedule first
+    const now = new Date().toISOString();
+    const activeAssignment = verificationAssignments.find(a => 
+      a.campaignId === appId && now >= a.startDateTime && now <= a.endDateTime
+    );
+
+    if (activeAssignment) {
+      verifierEmail = activeAssignment.userEmail;
+      verificationType = 'creator';
+    } else if (targetApp.referralPool && targetApp.referralPool.length > 0) {
+      // Check referral pool next
+      const activeSlot = targetApp.referralPool.find(s => s.completedCount < s.limit);
+      if (activeSlot) {
+        verifierEmail = activeSlot.userEmail;
+        verificationType = 'creator';
+        referralSlotId = activeSlot.id;
+      }
+    }
+
+    const newSubmission: Submission = {
+      id: `sub-${Date.now()}`,
+      userName: userProfile?.fullName || 'Anonymous',
+      userEmail: userProfile?.email || 'user@example.com',
+      appName: targetApp.name,
+      appId,
+      reward: targetApp.reward || 5.0,
+      proof,
+      proofType: proofType || 'text',
+      proofUrl,
+      status: 'Pending',
+      time: 'Just now',
+      verifierEmail,
+      verificationType,
+      referralSlotId
+    };
+
+    setSubmissions(prev => [newSubmission, ...prev]);
+  };
+
+  const approveSubmission = (submissionId: string) => {
+    setSubmissions(prev => prev.map(sub => {
+      if (sub.id === submissionId && sub.status === 'Pending') {
+        if (sub.userEmail === userProfile?.email) {
+          setWalletBalance(w => parseFloat((w + sub.reward).toFixed(2)));
+          setCompletedTaskIds(completed => [...completed, sub.appId]);
+        }
+        
+        if (sub.referralSlotId) {
+          setApps(prevApps => prevApps.map(app => {
+            if (app.id === sub.appId && app.referralPool) {
+              return {
+                ...app,
+                referralPool: app.referralPool.map(slot => {
+                  if (slot.id === sub.referralSlotId) {
+                    return { ...slot, completedCount: slot.completedCount + 1 };
+                  }
+                  return slot;
+                })
+               };
+            }
+            return app;
+          }));
+        }
+        return { ...sub, status: 'Approved' };
+      }
+      return sub;
+    }));
+  };
+
+  const rejectSubmission = (submissionId: string) => {
+    setSubmissions(prev => prev.map(sub => {
+      if (sub.id === submissionId && sub.status === 'Pending') {
+        return { ...sub, status: 'Rejected' };
+      }
+      return sub;
+    }));
+  };
+
   return (
     <AppContext.Provider value={{
       userRole,
@@ -282,6 +521,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       apps,
       pendingApps,
       partnershipLeads,
+      submissions,
+      verificationAssignments,
       walletBalance,
       completedTaskIds,
       theme,
@@ -294,7 +535,14 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       updateLeadStatus,
       claimTask,
       toggleTheme,
-      updateUserProfile
+      updateUserProfile,
+      addVerificationAssignment,
+      removeVerificationAssignment,
+      addReferralSlotToCampaign,
+      removeReferralSlot,
+      submitTaskCompletion,
+      approveSubmission,
+      rejectSubmission
     }}>
       {children}
     </AppContext.Provider>
@@ -308,3 +556,4 @@ export function useApp() {
   }
   return context;
 }
+

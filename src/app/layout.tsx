@@ -4,6 +4,7 @@ import { AppContextProvider } from "../context/AppContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import UserProfileModal from "../components/UserProfileModal";
+import SessionProviderWrapper from "../components/SessionProviderWrapper";
 
 export const metadata: Metadata = {
   title: "EarnByApps | Discover Premium Money Earning Apps",
@@ -18,24 +19,26 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppContextProvider>
-          {/* Glowing Background Orbs */}
-          <div className="bg-glow-container">
-            <div className="glow-orb-1"></div>
-            <div className="glow-orb-2"></div>
-          </div>
+        <SessionProviderWrapper>
+          <AppContextProvider>
+            {/* Glowing Background Orbs */}
+            <div className="bg-glow-container">
+              <div className="glow-orb-1"></div>
+              <div className="glow-orb-2"></div>
+            </div>
 
-          {/* Global Client Navigation Header */}
-          <Header />
+            {/* Global Client Navigation Header */}
+            <Header />
 
-          {/* User profile collection modal */}
-          <UserProfileModal />
+            {/* User profile collection modal */}
+            <UserProfileModal />
 
-          {children}
+            {children}
 
-          {/* Footer */}
-          <Footer />
-        </AppContextProvider>
+            {/* Footer */}
+            <Footer />
+          </AppContextProvider>
+        </SessionProviderWrapper>
       </body>
     </html>
   );

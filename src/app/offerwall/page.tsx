@@ -140,7 +140,7 @@ export default function Offerwall() {
               filteredApps.map((app, index) => (
                 <Link 
                   key={app.id} 
-                  href={`/offerwall/${app.id}`}
+                  href={`/offerwall/taskdetails/${app.id}`}
                   className="offer-task-card"
                   style={{ textDecoration: 'none' }}
                 >

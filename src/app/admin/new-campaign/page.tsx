@@ -67,14 +67,12 @@ export default function AdminNewCampaign() {
       tags: ['Admin direct', 'Promoted'],
       actionText: `Launch ${taskName}`,
       externalUrl: taskLink,
-      tasks: [
-        { id: `task-admin-${Date.now()}`, title: 'Complete action', description: description, reward: payoutNum }
-      ],
       targetCountry: targetCountry,
       currency: details.currency,
       currencySymbol: details.symbol,
       targetCompletions: submissionsCount,
-      videoUrl: videoUrl || undefined
+      videoUrl: videoUrl || undefined,
+      reward: payoutNum
     });
 
     setSuccess(true);

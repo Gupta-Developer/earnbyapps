@@ -106,6 +106,9 @@ export default function AdminOverview() {
             <Link href="/admin/partnership-leads" className="glow-btn-cyan" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textDecoration: 'none', textAlign: 'left', display: 'block' }}>
               ⏳ New Leads for Partnership ({partnershipLeads.filter(l => l.status === 'New').length})
             </Link>
+            <Link href="/admin/referral-pools" className="glow-btn-cyan" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textDecoration: 'none', textAlign: 'left', display: 'block', background: 'linear-gradient(135deg, var(--accent-indigo), #0ea5e9)' }}>
+              🔗 Manage Referral Pools & Rotate Links
+            </Link>
             <Link href="/admin/wallet" className="glow-btn-purple" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textDecoration: 'none', textAlign: 'left', display: 'block' }}>
               💸 Process User Withdrawals
             </Link>

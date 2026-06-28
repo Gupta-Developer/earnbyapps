@@ -3,15 +3,17 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 
-export default function SubmissionsPage() {
-  const { submissions, approveSubmission, rejectSubmission } = useApp();
+export default function PartnerVerifications() {
+  const { userProfile, submissions, approveSubmission, rejectSubmission } = useApp();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
   // Lightbox modal state
   const [lightboxMedia, setLightboxMedia] = useState<{ type: 'image' | 'video', url: string } | null>(null);
 
-  // Filter submissions assigned to admin verifications
-  const adminSubmissions = submissions.filter(sub => sub.verifierEmail === 'admin');
+  // Filter submissions assigned to this logged-in user
+  const myVerifications = submissions.filter(sub => 
+    userProfile && sub.verifierEmail === userProfile.email
+  );
 
   const handleCopy = (text: string, subId: string) => {
     navigator.clipboard.writeText(text);
@@ -20,42 +22,45 @@ export default function SubmissionsPage() {
   };
 
   return (
-    <div className="admin-content-card">
-      <div className="card-header-section">
-        <h2 className="card-heading">Earner Task Completions Ledger</h2>
-        <p className="card-subheading">Moderation workspace for task proof claims. Verify screenshot or video proofs before approving payouts.</p>
+    <div className="partner-content-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '32px' }}>
+      <div className="card-header-section" style={{ marginBottom: '24px' }}>
+        <h2 className="card-heading" style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
+          Referral Link Completions Review
+        </h2>
+        <p className="card-subheading" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          Review and verify screenshots or screen recordings submitted by earners on your referral links. Approve to reward them.
+        </p>
       </div>
 
       <div className="table-responsive-container">
-        <table className="user-table">
+        <table className="partner-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
           <thead>
-            <tr>
-              <th>User & Email</th>
-              <th>Campaign Name</th>
-              <th>Media Proof</th>
-              <th>Description / Text Proof</th>
-              <th>Reward</th>
-              <th>Time</th>
-              <th>Status</th>
-              <th>Actions</th>
+            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.05em' }}>User Details</th>
+              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.05em' }}>Campaign Name</th>
+              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.05em' }}>Media Proof</th>
+              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.05em' }}>Description / Text</th>
+              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.05em' }}>Reward</th>
+              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.05em' }}>Status</th>
+              <th style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: '0.05em' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {adminSubmissions.length > 0 ? (
-              adminSubmissions.map((sub) => (
-                <tr key={sub.id}>
-                  <td>
+            {myVerifications.length > 0 ? (
+              myVerifications.map((sub) => (
+                <tr key={sub.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '16px' }}>
                     <strong>{sub.userName}</strong>
                     <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       {sub.userEmail}
                     </span>
                   </td>
-                  <td>
+                  <td style={{ padding: '16px' }}>
                     <strong>{sub.appName}</strong>
                   </td>
                   
                   {/* Media Proof Preview Column */}
-                  <td>
+                  <td style={{ padding: '16px' }}>
                     {sub.proofUrl ? (
                       <button
                         onClick={() => setLightboxMedia({ type: (sub.proofType === 'video' ? 'video' : 'image'), url: sub.proofUrl || '' })}
@@ -71,17 +76,18 @@ export default function SubmissionsPage() {
                           color: 'var(--accent-indigo)',
                           fontWeight: 600,
                           fontSize: '0.75rem',
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
                         }}
                       >
-                        {sub.proofType === 'video' ? '🎬 Play Video Proof' : '🖼️ View Screenshot'}
+                        {sub.proofType === 'video' ? '🎬 Play Video' : '🖼️ View Screenshot'}
                       </button>
                     ) : (
                       <span style={{ fontStyle: 'italic', fontSize: '0.75rem', color: 'var(--text-muted)' }}>No media</span>
                     )}
                   </td>
 
-                  <td>
+                  <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{
                         background: 'rgba(255,255,255,0.02)',
@@ -90,7 +96,7 @@ export default function SubmissionsPage() {
                         borderRadius: '6px',
                         fontSize: '0.8rem',
                         color: 'var(--text-primary)',
-                        maxWidth: '200px',
+                        maxWidth: '180px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
@@ -116,13 +122,10 @@ export default function SubmissionsPage() {
                       </button>
                     </div>
                   </td>
-                  <td style={{ color: 'var(--accent-emerald)', fontWeight: 700 }}>
+                  <td style={{ padding: '16px', color: 'var(--accent-emerald)', fontWeight: 700 }}>
                     +${sub.reward.toFixed(2)}
                   </td>
-                  <td>
-                    <span style={{ fontSize: '0.8rem' }}>{sub.time}</span>
-                  </td>
-                  <td>
+                  <td style={{ padding: '16px' }}>
                     <span style={{
                       display: 'inline-block',
                       padding: '2px 8px',
@@ -135,26 +138,42 @@ export default function SubmissionsPage() {
                       {sub.status}
                     </span>
                   </td>
-                  <td>
+                  <td style={{ padding: '16px' }}>
                     {sub.status === 'Pending' ? (
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => approveSubmission(sub.id)} className="glow-btn-cyan" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                        <button 
+                          onClick={() => approveSubmission(sub.id)} 
+                          className="glow-btn-cyan" 
+                          style={{ padding: '6px 12px', fontSize: '0.75rem', border: 'none', cursor: 'pointer' }}
+                        >
                           Approve
                         </button>
-                        <button onClick={() => rejectSubmission(sub.id)} className="reject-moderation-btn" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                        <button 
+                          onClick={() => rejectSubmission(sub.id)} 
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.75rem',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            color: '#ef4444',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                          }}
+                        >
                           Reject
                         </button>
                       </div>
                     ) : (
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Moderated</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Verified</span>
                     )}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  No pending admin task submissions found.
+                <td colSpan={7} style={{ padding: '32px', fontStyle: 'italic', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  No pending earner submissions found for your referral links.
                 </td>
               </tr>
             )}

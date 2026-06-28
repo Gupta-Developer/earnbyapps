@@ -4,16 +4,18 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp, UserRole } from '../context/AppContext';
+import { useSession, signIn, signOut } from 'next-auth/react';
 
 export default function Header() {
   const pathname = usePathname();
   const { userRole, userProfile, login, logout, theme, toggleTheme } = useApp();
   const [showAuthDropdown, setShowAuthDropdown] = useState(false);
+  const { data: session } = useSession();
 
   // Hide global navbar on dashboard pages ONLY IF the user has access to them.
   // If access is denied (wrong role), show the navbar so they can switch roles.
   const hasAdminAccess = pathname.startsWith('/admin') && userRole === 'admin';
-  const hasPartnerAccess = pathname.startsWith('/partner') && userRole === 'user' && !!userProfile;
+  const hasPartnerAccess = pathname.startsWith('/partner') && userRole === 'user';
   if (hasAdminAccess || hasPartnerAccess) {
     return null;
   }
@@ -80,38 +82,48 @@ export default function Header() {
 
                 <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-color)' }}></div>
 
-                {userRole === 'user' && userProfile && (
+                {session && session.user ? (
                   <div style={{ padding: '8px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid var(--border-color)', margin: '4px 0' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px' }}>Profile Details</div>
-                    <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📧 {userProfile.email}</div>
-                    <div style={{ color: 'var(--text-secondary)' }}>📞 {userProfile.phone}</div>
-                    <div style={{ color: 'var(--text-secondary)' }}>👤 {userProfile.gender}</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px' }}>Google Account</div>
+                    <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>👤 {session.user.name}</div>
+                    <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📧 {session.user.email}</div>
                     <button 
                       onClick={() => {
                         setShowAuthDropdown(false);
-                        window.dispatchEvent(new CustomEvent('open-profile-modal'));
+                        signOut();
                       }}
                       className="dropdown-item link-item"
-                      style={{ padding: '4px 0 0', marginTop: '6px', border: 'none', background: 'transparent', width: '100%', textAlign: 'left', fontSize: '0.78rem' }}
+                      style={{ padding: '6px 0 0', marginTop: '8px', border: 'none', background: 'transparent', width: '100%', textAlign: 'left', fontSize: '0.78rem', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}
                     >
-                      ✏️ Edit Profile
+                      🚪 Sign Out
                     </button>
                   </div>
-                )}
-
-                {userRole === 'user' && !userProfile && (
+                ) : (
                   <button
                     onClick={() => {
                       setShowAuthDropdown(false);
-                      window.dispatchEvent(new CustomEvent('open-profile-modal'));
+                      signIn('google');
                     }}
-                    className="dropdown-item link-item"
+                    className="dropdown-item active"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--accent-indigo), #0ea5e9)',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      marginTop: '8px',
+                      display: 'block',
+                      width: '100%'
+                    }}
                   >
-                    🔐 Sign In / Setup Profile
+                    🔑 Sign In with Google
                   </button>
                 )}
 
-                {userRole === 'user' && userProfile && (
+                {userRole === 'user' && session && (
                   <Link href="/partner/create-campaign" onClick={() => setShowAuthDropdown(false)} className="dropdown-item link-item">
                     ➡️ Go to Partner Portal
                   </Link>

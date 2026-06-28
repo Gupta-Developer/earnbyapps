@@ -291,23 +291,22 @@ export default function PartnerAssignedCampaigns() {
             </div>
 
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Below are the live tasks associated with this campaign. These actions are active on the main earner offerwall.
+              Below is the details of this campaign task active on the main earner offerwall.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
-              {selectedCampaign.tasks && selectedCampaign.tasks.length > 0 ? (
-                selectedCampaign.tasks.map((task, idx) => (
-                  <div key={task.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
-                      <span>{idx + 1}. {task.title}</span>
-                      <span style={{ color: 'var(--accent-emerald)' }}>+${task.reward.toFixed(2)}</span>
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>{task.description}</p>
-                  </div>
-                ))
-              ) : (
-                <p style={{ fontStyle: 'italic', fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>No tasks configured.</p>
-              )}
+              <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '0.95rem', marginBottom: '8px' }}>
+                  <span>Earning Action Payout</span>
+                  <span style={{ color: 'var(--accent-emerald)' }}>+${selectedCampaign.reward.toFixed(2)}</span>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                  {selectedCampaign.longDescription || selectedCampaign.description}
+                </p>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Platform: <strong>{selectedCampaign.platforms.join(', ')}</strong> | Category: <strong>{selectedCampaign.category}</strong>
+                </div>
+              </div>
             </div>
 
             <button 
@@ -315,7 +314,7 @@ export default function PartnerAssignedCampaigns() {
               className="glow-btn-cyan"
               style={{ padding: '10px', marginTop: '8px' }}
             >
-              Close inspector
+              Close Inspector
             </button>
           </div>
         </div>

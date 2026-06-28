@@ -23,29 +23,13 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     localStorage.setItem('partner-sidebar-collapsed', String(newVal));
   };
 
-  if (userRole !== 'user' || !userProfile) {
+  if (userRole !== 'user') {
     return (
       <main className="partner-denied-container">
         <div className="glass-card restriction-card">
           <span className="restriction-icon">🔒</span>
-          <h2>
-            {userRole !== 'user' ? 'Access Denied' : 'Profile Setup Required'}
-          </h2>
-          <p>
-            {userRole !== 'user' 
-              ? 'You must select the User role from the top-right account menu to access this partner campaign manager.'
-              : 'Please complete your account profile details to manage and submit campaign leads.'
-            }
-          </p>
-          {userRole === 'user' && (
-            <button 
-              onClick={() => window.dispatchEvent(new CustomEvent('open-profile-modal'))}
-              className="glow-btn-purple"
-              style={{ marginTop: '20px', padding: '10px 24px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
-            >
-              🔐 Setup Profile Details
-            </button>
-          )}
+          <h2>Access Denied</h2>
+          <p>You must select the User role from the top-right account menu to access this partner campaign manager.</p>
         </div>
         <style>{`
           .partner-denied-container {
@@ -90,6 +74,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     { id: 'overview', href: '/partner/overview', label: 'Overview', icon: '🏠' },
     { id: 'my-tasks', href: '/partner/my-tasks', label: 'My Campaigns', icon: '📋' },
     { id: 'assigned-campaigns', href: '/partner/assigned-campaigns', label: 'Assigned Campaigns', icon: '🎯' },
+    { id: 'verifications', href: '/partner/verifications', label: 'Verify Submissions', icon: '✅' },
     { id: 'create-campaign', href: '/partner/create-campaign', label: 'Create Campaign', icon: '➕' },
     { id: 'platforms', href: '/partner/platforms', label: 'Platforms', icon: '📱' },
     { id: 'help-center', href: '/partner/help-center', label: 'Help Center', icon: '❓' }
@@ -99,6 +84,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     pathname.includes('/create-campaign') ? 'Create Campaign' : 
     pathname.includes('/my-tasks') ? 'My Campaigns' : 
     pathname.includes('/assigned-campaigns') ? 'Assigned Campaigns' :
+    pathname.includes('/verifications') ? 'Verify Submissions' : 
     pathname.includes('/platforms') ? 'Platforms' : 
     pathname.includes('/help-center') ? 'Help Center' : 'Overview';
 
