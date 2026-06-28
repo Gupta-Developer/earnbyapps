@@ -168,6 +168,19 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         paymentDetails: 'user@bank'
       });
       setUserRole((session.user as any).role || 'user');
+    } else {
+      // Clear profile when Google session is signed out
+      const defaultProfile: UserProfile = {
+        fullName: 'Normal User',
+        email: 'user@example.com',
+        phone: '9876543210',
+        gender: 'Male',
+        country: 'India',
+        paymentMethod: 'UPI ID',
+        paymentDetails: 'user@bank'
+      };
+      setUserProfile(defaultProfile);
+      setUserRole('user');
     }
   }, [session]);
 
