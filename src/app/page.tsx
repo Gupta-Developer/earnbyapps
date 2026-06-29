@@ -2,8 +2,18 @@
  
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession, signIn } from 'next-auth/react';
 
 export default function Home() {
+  const { data: session } = useSession();
+
+  const handleLaunchCampaignClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!session) {
+      e.preventDefault();
+      signIn('google', { callbackUrl: '/partner/create-campaign' });
+    }
+  };
+
   const words = ['Actions', 'Results', 'Leads', 'Conversions', 'Growth'];
   const [wordIndex, setWordIndex] = useState(0);
   const [currentText, setCurrentText] = useState('');
@@ -72,7 +82,11 @@ export default function Home() {
             Easily set up your campaign & start getting conversions
           </p>
 
-          <Link href="/partner/create-campaign" className="glow-btn-purple">
+          <Link 
+            href="/partner/create-campaign" 
+            className="glow-btn-purple"
+            onClick={handleLaunchCampaignClick}
+          >
             Launch Your Campaign →
           </Link>
         </div>

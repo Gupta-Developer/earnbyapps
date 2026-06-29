@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { userRole } = useApp();
@@ -138,17 +138,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Top Header Bar */}
         <header className="viewport-header-bar">
           <h1 className="active-tab-title">{activeTitle}</h1>
-          <div className="admin-profile-display">
-            {session && session.user?.image ? (
-              <img 
-                src={session.user.image} 
-                alt="Admin avatar" 
-                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
-              />
-            ) : (
-              <span className="admin-avatar">👤</span>
-            )}
-            <span className="admin-profile-name">Hi, {session?.user?.name || 'Admin User'}</span>
+          <div className="admin-profile-display" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {session && session.user?.image ? (
+                <img 
+                  src={session.user.image} 
+                  alt="Admin avatar" 
+                  style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <span className="admin-avatar">👤</span>
+              )}
+              <span className="admin-profile-name">Hi, {session?.user?.name || 'Admin User'}</span>
+            </div>
+            <button 
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="logout-btn-header"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-secondary)',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              🚪 Sign Out
+            </button>
           </div>
         </header>
 
@@ -318,6 +339,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .admin-profile-name {
           font-weight: 600;
           color: var(--text-primary);
+        }
+        .logout-btn-header:hover {
+          border-color: #ef4444 !important;
+          color: #ef4444 !important;
+          background: rgba(239, 68, 68, 0.05) !important;
         }
         .viewport-scrollable-content {
           flex: 1;

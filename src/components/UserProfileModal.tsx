@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { countries } from '../data/countries';
+import { useSession } from 'next-auth/react';
 
 const PAYMENT_METHODS = {
   India: [
@@ -19,6 +20,7 @@ const PAYMENT_METHODS = {
 
 export default function UserProfileModal() {
   const { userRole, userProfile, updateUserProfile } = useApp();
+  const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1); // 1: Email Login, 2: Profile Details
   
@@ -37,11 +39,27 @@ export default function UserProfileModal() {
   useEffect(() => {
     // Check if we are in partner portal pages or if the user explicitly clicked to complete profile
     const isPartnerRoute = window.location.pathname.startsWith('/partner');
-    if (userRole === 'user' && !userProfile && isPartnerRoute) {
-      setIsOpen(true);
-      setStep(1);
+    if (userRole === 'user' && isPartnerRoute) {
+      if (session?.user) {
+        // If Google session exists, skip Step 1 and check if profile details are missing
+        const isProfileIncomplete = !userProfile || !userProfile.phone || !userProfile.gender;
+        if (isProfileIncomplete) {
+          setIsOpen(true);
+          setStep(2); // Skip Step 1 (email verification)
+          if (session.user.email) setEmail(session.user.email);
+          if (session.user.name) setFullName(session.user.name);
+        } else {
+          setIsOpen(false);
+        }
+      } else {
+        // No session exists, show modal with Step 1 (email verification) if userProfile is not set
+        if (!userProfile) {
+          setIsOpen(true);
+          setStep(1);
+        }
+      }
     }
-  }, [userRole, userProfile]);
+  }, [userRole, userProfile, session]);
 
   // Listen to a custom event to open the modal from other components (like Header)
   useEffect(() => {
