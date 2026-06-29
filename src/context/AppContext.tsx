@@ -90,6 +90,7 @@ interface AppContextType {
   login: (role: UserRole) => void;
   logout: () => void;
   submitOffer: (app: Omit<EarningApp, 'id' | 'rating' | 'reviewsCount' | 'difficulty'>) => void;
+  updateOffer: (app: EarningApp) => void;
   approveOffer: (id: string, updatedApp?: EarningApp) => void;
   rejectOffer: (id: string) => void;
   submitPartnershipLead: (lead: Omit<PartnershipLead, 'id' | 'status' | 'createdAt' | 'partnerName' | 'partnerEmail'>) => void;
@@ -392,6 +393,27 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
+  const updateOffer = async (updatedApp: EarningApp) => {
+    // Update local state
+    setApps(prev => {
+      const nextApps = prev.map(app => app.id === updatedApp.id ? updatedApp : app);
+      localStorage.setItem('eb_apps', JSON.stringify(nextApps));
+      return nextApps;
+    });
+
+    // Save to Neon Database
+    try {
+      await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedApp)
+      });
+      console.log("Successfully updated campaign in Neon PostgreSQL database");
+    } catch (e) {
+      console.error("Error updating campaign in database API:", e);
+    }
+  };
+
   const approveOffer = async (id: string, updatedApp?: EarningApp) => {
     const appToApprove = updatedApp || pendingApps.find(app => app.id === id);
     if (!appToApprove) return;
@@ -589,6 +611,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       login,
       logout,
       submitOffer,
+      updateOffer,
       approveOffer,
       rejectOffer,
       submitPartnershipLead,

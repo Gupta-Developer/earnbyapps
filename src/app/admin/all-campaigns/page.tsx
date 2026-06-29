@@ -2,11 +2,37 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
-import { getCategoryIcon } from '../../../data/apps';
+import { getCategoryIcon, EarningApp } from '../../../data/apps';
+import { countries } from '../../../data/countries';
+
+const COUNTRY_CURRENCIES: Record<string, { currency: string; symbol: string }> = {
+  'Global': { currency: 'USD', symbol: '$' },
+  'India': { currency: 'INR', symbol: '₹' },
+  'United States': { currency: 'USD', symbol: '$' },
+  'United Kingdom': { currency: 'GBP', symbol: '£' },
+  'Europe': { currency: 'EUR', symbol: '€' }
+};
 
 export default function AdminAllCampaigns() {
-  const { apps, submissions } = useApp();
+  const { apps, submissions, updateOffer } = useApp();
   const [deactivatedIds, setDeactivatedIds] = useState<string[]>([]);
+
+  // Edit campaign states
+  const [editingApp, setEditingApp] = useState<EarningApp | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState<any>('Gaming');
+  const [editPayout, setEditPayout] = useState('0.50');
+  const [editCountry, setEditCountry] = useState('Global');
+  const [editCompletions, setEditCompletions] = useState('1000');
+  const [editLink, setEditLink] = useState('');
+  const [editVideo, setEditVideo] = useState('');
+  const [editLogo, setEditLogo] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [editPlatforms, setEditPlatforms] = useState<('iOS' | 'Android' | 'Web')[]>([]);
+
+  // Search state for country inside edit modal
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
 
   useEffect(() => {
     const stored = localStorage.getItem('eb_admin_deactivated');
@@ -14,6 +40,21 @@ export default function AdminAllCampaigns() {
       setDeactivatedIds(JSON.parse(stored));
     }
   }, []);
+
+  useEffect(() => {
+    if (editingApp) {
+      setEditName(editingApp.name);
+      setEditCategory(editingApp.category);
+      setEditPayout(editingApp.reward?.toString() || '0.50');
+      setEditCountry(editingApp.targetCountry || 'Global');
+      setEditCompletions(editingApp.targetCompletions?.toString() || '1000');
+      setEditLink(editingApp.externalUrl || '');
+      setEditVideo(editingApp.videoUrl || '');
+      setEditLogo(editingApp.logoUrl || '');
+      setEditTags(editingApp.tags?.join(', ') || '');
+      setEditPlatforms(editingApp.platforms || []);
+    }
+  }, [editingApp]);
 
   const handleToggleDeactivate = (id: string) => {
     let nextIds: string[];
@@ -24,6 +65,59 @@ export default function AdminAllCampaigns() {
     }
     setDeactivatedIds(nextIds);
     localStorage.setItem('eb_admin_deactivated', JSON.stringify(nextIds));
+  };
+
+  const getCurrencyDetails = (countryName: string) => {
+    if (COUNTRY_CURRENCIES[countryName]) {
+      return COUNTRY_CURRENCIES[countryName];
+    }
+    if (countryName === 'India') return { currency: 'INR', symbol: '₹' };
+    if (countryName === 'United Kingdom') return { currency: 'GBP', symbol: '£' };
+    return { currency: 'USD', symbol: '$' };
+  };
+
+  const handleTogglePlatform = (plat: 'iOS' | 'Android' | 'Web') => {
+    if (editPlatforms.includes(plat)) {
+      setEditPlatforms(editPlatforms.filter(p => p !== plat));
+    } else {
+      setEditPlatforms([...editPlatforms, plat]);
+    }
+  };
+
+  const handleSaveChanges = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingApp) return;
+
+    const payoutNum = parseFloat(editPayout) || 0.50;
+    const details = getCurrencyDetails(editCountry);
+    const rateString = `${details.symbol}${payoutNum.toFixed(2)} / action`;
+    const submissionsCount = parseInt(editCompletions) || 1000;
+    const parsedTags = editTags
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    const updatedApp: EarningApp = {
+      ...editingApp,
+      name: editName,
+      category: editCategory,
+      platforms: editPlatforms,
+      earningRate: rateString,
+      averageEarningsPerDay: payoutNum,
+      tags: parsedTags.length > 0 ? parsedTags : ['Admin direct', 'Promoted'],
+      actionText: `Launch ${editName}`,
+      externalUrl: editLink,
+      targetCountry: editCountry,
+      currency: details.currency,
+      currencySymbol: details.symbol,
+      targetCompletions: submissionsCount,
+      videoUrl: editVideo || undefined,
+      reward: payoutNum,
+      logoUrl: editLogo || undefined
+    };
+
+    updateOffer(updatedApp);
+    setEditingApp(null);
   };
 
   return (
@@ -92,21 +186,38 @@ export default function AdminAllCampaigns() {
                     </span>
                   </td>
                   <td>
-                    <button
-                      onClick={() => handleToggleDeactivate(app.id)}
-                      style={{
-                        background: isDeactivated ? 'var(--accent-emerald)' : 'transparent',
-                        border: '1px solid ' + (isDeactivated ? 'transparent' : 'var(--border-color)'),
-                        color: isDeactivated ? 'black' : 'var(--text-primary)',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.78rem',
-                        cursor: 'pointer',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {isDeactivated ? 'Resume' : 'Pause'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleToggleDeactivate(app.id)}
+                        style={{
+                          background: isDeactivated ? 'var(--accent-emerald)' : 'transparent',
+                          border: '1px solid ' + (isDeactivated ? 'transparent' : 'var(--border-color)'),
+                          color: isDeactivated ? 'black' : 'var(--text-primary)',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {isDeactivated ? 'Resume' : 'Pause'}
+                      </button>
+                      <button
+                        onClick={() => setEditingApp(app)}
+                        style={{
+                          background: 'var(--accent-indigo)',
+                          border: 'none',
+                          color: 'white',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -114,6 +225,310 @@ export default function AdminAllCampaigns() {
           </tbody>
         </table>
       </div>
+
+      {editingApp && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '650px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '24px',
+            boxShadow: 'var(--shadow-premium)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>Modify Campaign: {editingApp.name}</h3>
+              <button 
+                onClick={() => setEditingApp(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveChanges} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group">
+                <label>Task Name *</label>
+                <input 
+                  type="text" 
+                  value={editName} 
+                  onChange={(e) => setEditName(e.target.value)} 
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label>Category *</label>
+                  <select 
+                    value={editCategory} 
+                    onChange={(e) => setEditCategory(e.target.value as any)}
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
+                  >
+                    <option value="Gaming">🎮 Gaming</option>
+                    <option value="Surveys">📋 Surveys</option>
+                    <option value="App Testing">🧪 App Testing</option>
+                    <option value="Passive">💸 Passive</option>
+                    <option value="App Install & Sign Up">📲 App Install & Sign Up</option>
+                    <option value="LinkedIn Followers">👔 LinkedIn Followers</option>
+                    <option value="Google Maps Reviews">📍 Google Maps Reviews</option>
+                    <option value="Telegram Members">✈️ Telegram Members</option>
+                    <option value="WhatsApp Members">💬 WhatsApp Members</option>
+                    <option value="Instagram Followers">📸 Instagram Followers</option>
+                    <option value="Facebook Page Followers">👍 Facebook Page Followers</option>
+                    <option value="Youtube Subscribers">▶️ Youtube Subscribers</option>
+                    <option value="Trustpilot Reviews">⭐ Trustpilot Reviews</option>
+                    <option value="Justdial Reviews">📞 Justdial Reviews</option>
+                    <option value="Play Store Reviews">🤖 Play Store Reviews</option>
+                    <option value="Custom Task">⚙️ Custom Task</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ position: 'relative' }}>
+                  <label>Target Country *</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                    style={{
+                      width: '100%',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      color: 'var(--text-primary)',
+                      height: '40px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <span>
+                      {editCountry === 'Global' 
+                        ? '🌍 Global (USD - $)' 
+                        : `${countries.find(c => c.name === editCountry)?.flag || '🏳️'} ${editCountry}`
+                      }
+                    </span>
+                    <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>▼</span>
+                  </button>
+
+                  {isCountryDropdownOpen && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 200,
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      boxShadow: 'var(--shadow-premium)',
+                      marginBottom: '4px',
+                      padding: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <input
+                        type="text"
+                        value={countrySearchQuery}
+                        onChange={(e) => setCountrySearchQuery(e.target.value)}
+                        placeholder="Search country..."
+                        autoFocus
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          border: '1px solid var(--border-color)',
+                          padding: '8px 12px',
+                          borderRadius: '4px',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.85rem',
+                          width: '100%',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <div style={{
+                        maxHeight: '150px',
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}>
+                        {('global'.includes(countrySearchQuery.toLowerCase())) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditCountry('Global');
+                              setIsCountryDropdownOpen(false);
+                              setCountrySearchQuery('');
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text-primary)',
+                              padding: '8px 10px',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                            className="country-item-btn"
+                          >
+                            🌍 Global (USD - $)
+                          </button>
+                        )}
+                        {countries
+                          .filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()))
+                          .map(c => (
+                            <button
+                              key={c.name}
+                              type="button"
+                              onClick={() => {
+                                setEditCountry(c.name);
+                                setIsCountryDropdownOpen(false);
+                                setCountrySearchQuery('');
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-primary)',
+                                padding: '8px 10px',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                borderRadius: '4px'
+                              }}
+                              className="country-item-btn"
+                            >
+                              {c.flag} {c.name}
+                            </button>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label>Payout per Conversion *</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0.01" 
+                    value={editPayout} 
+                    onChange={(e) => setEditPayout(e.target.value)} 
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Total Allowed Submissions *</label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    value={editCompletions} 
+                    onChange={(e) => setEditCompletions(e.target.value)} 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label>Task Link *</label>
+                  <input 
+                    type="url" 
+                    value={editLink} 
+                    onChange={(e) => setEditLink(e.target.value)} 
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Video Tutorial Link (Optional)</label>
+                  <input 
+                    type="url" 
+                    value={editVideo} 
+                    onChange={(e) => setEditVideo(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Campaign Logo URL (Optional)</label>
+                <input 
+                  type="url" 
+                  value={editLogo} 
+                  onChange={(e) => setEditLogo(e.target.value)} 
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Tags / Badges (Comma-separated)</label>
+                <input 
+                  type="text" 
+                  value={editTags} 
+                  onChange={(e) => setEditTags(e.target.value)} 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Platforms *</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {['iOS', 'Android', 'Web'].map(plat => (
+                    <button
+                      type="button"
+                      key={plat}
+                      onClick={() => handleTogglePlatform(plat as any)}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: editPlatforms.includes(plat as any) ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
+                        color: editPlatforms.includes(plat as any) ? 'var(--accent-indigo)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {plat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button type="submit" className="glow-btn-cyan" style={{ flex: 1, padding: '10px' }}>
+                  Save Changes
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setEditingApp(null)} 
+                  style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .admin-content-card {
@@ -168,6 +583,10 @@ export default function AdminAllCampaigns() {
           padding: 2px 6px;
           border-radius: 4px;
           color: var(--text-secondary);
+        }
+        .country-item-btn:hover {
+          background: rgba(79, 70, 229, 0.08) !important;
+          color: var(--accent-indigo) !important;
         }
       `}</style>
     </div>
