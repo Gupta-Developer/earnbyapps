@@ -5,7 +5,7 @@ import { useApp } from '../../../context/AppContext';
 import { getCategoryIcon } from '../../../data/apps';
 
 export default function AdminAllCampaigns() {
-  const { apps } = useApp();
+  const { apps, submissions } = useApp();
   const [deactivatedIds, setDeactivatedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -41,6 +41,7 @@ export default function AdminAllCampaigns() {
               <th>Category</th>
               <th>Platform</th>
               <th>Earning Rate</th>
+              <th>Conversions / Cap</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -48,6 +49,10 @@ export default function AdminAllCampaigns() {
           <tbody>
             {apps.map((app) => {
               const isDeactivated = deactivatedIds.includes(app.id);
+              const completedCount = submissions.filter(s => s.appId === app.id && s.status === 'Approved').length;
+              const target = app.targetCompletions || 1000;
+              const progressPercentage = Math.min(100, (completedCount / target) * 100);
+              
               return (
                 <tr key={app.id}>
                   <td>
@@ -62,6 +67,16 @@ export default function AdminAllCampaigns() {
                   </td>
                   <td style={{ color: 'var(--accent-emerald)', fontWeight: 700 }}>
                     {app.earningRate}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                        {completedCount.toLocaleString()} / {target.toLocaleString()}
+                      </span>
+                      <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${progressPercentage}%`, height: '100%', background: 'var(--accent-indigo)' }}></div>
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <span style={{

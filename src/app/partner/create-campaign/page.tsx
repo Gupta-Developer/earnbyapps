@@ -26,6 +26,9 @@ export default function CreatePartnerCampaign() {
   const [payout, setPayout] = useState<number>(0.50);
   const [targetCompletions, setTargetCompletions] = useState<number>(1000);
 
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
+
   const getCurrencyDetails = (countryName: string) => {
     if (COUNTRY_CURRENCIES[countryName]) {
       return COUNTRY_CURRENCIES[countryName];
@@ -155,19 +158,126 @@ export default function CreatePartnerCampaign() {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="target-country">Target Country *</label>
-                <select 
-                  id="target-country"
-                  value={targetCountry} 
-                  onChange={(e) => setTargetCountry(e.target.value)}
-                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
+              <div className="form-group" style={{ position: 'relative' }}>
+                <label>Target Country *</label>
+                <button
+                  type="button"
+                  onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    color: 'var(--text-primary)',
+                    height: '40px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
                 >
-                  <option value="Global">🌍 Global (USD - $)</option>
-                  {countries.map(c => (
-                    <option key={c.name} value={c.name}>{c.flag} {c.name}</option>
-                  ))}
-                </select>
+                  <span>
+                    {targetCountry === 'Global' 
+                      ? '🌍 Global (USD - $)' 
+                      : `${countries.find(c => c.name === targetCountry)?.flag || '🏳️'} ${targetCountry}`
+                    }
+                  </span>
+                  <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>▼</span>
+                </button>
+
+                {isCountryDropdownOpen && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 200,
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    boxShadow: 'var(--shadow-premium)',
+                    marginTop: '4px',
+                    padding: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <input
+                      type="text"
+                      value={countrySearchQuery}
+                      onChange={(e) => setCountrySearchQuery(e.target.value)}
+                      placeholder="Search country..."
+                      autoFocus
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-color)',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        width: '100%',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <div style={{
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                      {('global'.includes(countrySearchQuery.toLowerCase())) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetCountry('Global');
+                            setIsCountryDropdownOpen(false);
+                            setCountrySearchQuery('');
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-primary)',
+                            padding: '8px 10px',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderRadius: '4px'
+                          }}
+                          className="country-item-btn"
+                        >
+                          🌍 Global (USD - $)
+                        </button>
+                      )}
+                      {countries
+                        .filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()))
+                        .map(c => (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => {
+                              setTargetCountry(c.name);
+                              setIsCountryDropdownOpen(false);
+                              setCountrySearchQuery('');
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text-primary)',
+                              padding: '8px 10px',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                            className="country-item-btn"
+                          >
+                            {c.flag} {c.name}
+                          </button>
+                        ))
+                      }
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -519,6 +629,10 @@ export default function CreatePartnerCampaign() {
         }
         input[type=number] {
           -moz-appearance: textfield;
+        }
+        .country-item-btn:hover {
+          background: rgba(79, 70, 229, 0.08) !important;
+          color: var(--accent-indigo) !important;
         }
       `}</style>
     </div>

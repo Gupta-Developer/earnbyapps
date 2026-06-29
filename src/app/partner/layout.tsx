@@ -79,6 +79,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     { id: 'verifications', href: '/partner/verifications', label: 'Verify Submissions', icon: '✅' },
     { id: 'create-campaign', href: '/partner/create-campaign', label: 'Create Campaign', icon: '➕' },
     { id: 'platforms', href: '/partner/platforms', label: 'Platforms', icon: '📱' },
+    { id: 'account', href: '/partner/account', label: 'My Account', icon: '👤' },
     { id: 'help-center', href: '/partner/help-center', label: 'Help Center', icon: '❓' }
   ];
 
@@ -88,6 +89,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     pathname.includes('/assigned-campaigns') ? 'Assigned Campaigns' :
     pathname.includes('/verifications') ? 'Verify Submissions' : 
     pathname.includes('/platforms') ? 'Platforms' : 
+    pathname.includes('/account') ? 'My Account' :
     pathname.includes('/help-center') ? 'Help Center' : 'Overview';
 
   return (

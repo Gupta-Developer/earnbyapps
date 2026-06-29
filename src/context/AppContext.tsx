@@ -266,6 +266,25 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     setIsInitialized(true);
   }, []);
 
+  // Load campaigns from database API
+  useEffect(() => {
+    async function loadCampaigns() {
+      try {
+        const res = await fetch('/api/campaigns');
+        if (res.ok) {
+          const dbApps = await res.json();
+          if (dbApps && dbApps.length > 0) {
+            setApps(dbApps);
+            localStorage.setItem('eb_apps', JSON.stringify(dbApps));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load campaigns from DB API, using local storage fallback", e);
+      }
+    }
+    loadCampaigns();
+  }, []);
+
   // Sync theme changes to body class
   useEffect(() => {
     if (theme === 'light') {
@@ -344,7 +363,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     setUserProfile(profile);
   };
 
-  const submitOffer = (newApp: Omit<EarningApp, 'id' | 'rating' | 'reviewsCount' | 'difficulty'>) => {
+  const submitOffer = async (newApp: Omit<EarningApp, 'id' | 'rating' | 'reviewsCount' | 'difficulty'>) => {
     const fullApp: EarningApp = {
       ...newApp,
       id: `custom-${Date.now()}`,
@@ -352,22 +371,50 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       reviewsCount: 1,
       difficulty: 'Easy'
     };
-    // Live admin offers bypass approval directly to active directory, or can go to pending. Let's make it direct for admin since admin is adding it.
-    // Wait, the page says: "Once verified and approved by an administrator..."
-    // Since only admins can create tasks and campaigns now, when admin creates an offer it should go straight to active apps.
-    // Let's make it go to apps state.
-    setApps(prev => [...prev, fullApp]);
+    
+    // Update local state
+    setApps(prev => {
+      const nextApps = [...prev, fullApp];
+      localStorage.setItem('eb_apps', JSON.stringify(nextApps));
+      return nextApps;
+    });
+
+    // Save to Neon Database
+    try {
+      await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullApp)
+      });
+      console.log("Successfully saved campaign to Neon PostgreSQL database");
+    } catch (e) {
+      console.error("Error saving campaign to database API:", e);
+    }
   };
 
-  const approveOffer = (id: string, updatedApp?: EarningApp) => {
+  const approveOffer = async (id: string, updatedApp?: EarningApp) => {
     const appToApprove = updatedApp || pendingApps.find(app => app.id === id);
     if (!appToApprove) return;
 
     setApps(prev => {
       if (prev.some(app => app.id === appToApprove.id)) return prev;
-      return [...prev, appToApprove];
+      const nextApps = [...prev, appToApprove];
+      localStorage.setItem('eb_apps', JSON.stringify(nextApps));
+      return nextApps;
     });
     setPendingApps(prev => prev.filter(app => app.id !== id));
+
+    // Save to Neon Database
+    try {
+      await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appToApprove)
+      });
+      console.log("Successfully saved approved campaign to database");
+    } catch (e) {
+      console.error("Error saving approved campaign to database API:", e);
+    }
   };
 
   const rejectOffer = (id: string) => {

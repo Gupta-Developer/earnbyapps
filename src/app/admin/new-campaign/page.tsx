@@ -25,6 +25,14 @@ export default function AdminNewCampaign() {
   const [description, setDescription] = useState('');
   const [allowedSubmissions, setAllowedSubmissions] = useState('1000');
   
+  // Custom Campaign Details
+  const [logoUrl, setLogoUrl] = useState('');
+  const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Easy');
+  const [tagsInput, setTagsInput] = useState('New, Promoted');
+
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
+
   const [success, setSuccess] = useState(false);
 
   const getCurrencyDetails = (countryName: string) => {
@@ -55,6 +63,10 @@ export default function AdminNewCampaign() {
     const details = getCurrencyDetails(targetCountry);
     const rateString = `${details.symbol}${payoutNum.toFixed(2)} / action`;
     const submissionsCount = parseInt(allowedSubmissions) || 1000;
+    const parsedTags = tagsInput
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
 
     submitOffer({
       name: taskName,
@@ -64,7 +76,7 @@ export default function AdminNewCampaign() {
       averageEarningsPerDay: payoutNum,
       description: description,
       longDescription: description,
-      tags: ['Admin direct', 'Promoted'],
+      tags: parsedTags.length > 0 ? parsedTags : ['Admin direct', 'Promoted'],
       actionText: `Launch ${taskName}`,
       externalUrl: taskLink,
       targetCountry: targetCountry,
@@ -72,7 +84,9 @@ export default function AdminNewCampaign() {
       currencySymbol: details.symbol,
       targetCompletions: submissionsCount,
       videoUrl: videoUrl || undefined,
-      reward: payoutNum
+      reward: payoutNum,
+      logoUrl: logoUrl || undefined,
+      difficulty: difficulty
     });
 
     setSuccess(true);
@@ -88,6 +102,9 @@ export default function AdminNewCampaign() {
     setPlatforms([]);
     setDescription('');
     setAllowedSubmissions('1000');
+    setLogoUrl('');
+    setDifficulty('Easy');
+    setTagsInput('New, Promoted');
     setSuccess(false);
   };
 
@@ -151,19 +168,126 @@ export default function AdminNewCampaign() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="target-country">Target Country *</label>
-              <select 
-                id="target-country"
-                value={targetCountry} 
-                onChange={(e) => setTargetCountry(e.target.value)}
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label>Target Country *</label>
+              <button
+                type="button"
+                onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  color: 'var(--text-primary)',
+                  height: '40px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
               >
-                <option value="Global">🌍 Global (USD - $)</option>
-                {countries.map(c => (
-                  <option key={c.name} value={c.name}>{c.flag} {c.name}</option>
-                ))}
-              </select>
+                <span>
+                  {targetCountry === 'Global' 
+                    ? '🌍 Global (USD - $)' 
+                    : `${countries.find(c => c.name === targetCountry)?.flag || '🏳️'} ${targetCountry}`
+                  }
+                </span>
+                <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>▼</span>
+              </button>
+
+              {isCountryDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 200,
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  boxShadow: 'var(--shadow-premium)',
+                  marginTop: '4px',
+                  padding: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <input
+                    type="text"
+                    value={countrySearchQuery}
+                    onChange={(e) => setCountrySearchQuery(e.target.value)}
+                    placeholder="Search country..."
+                    autoFocus
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--border-color)',
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.85rem',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <div style={{
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}>
+                    {('global'.includes(countrySearchQuery.toLowerCase())) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTargetCountry('Global');
+                          setIsCountryDropdownOpen(false);
+                          setCountrySearchQuery('');
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-primary)',
+                          padding: '8px 10px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          borderRadius: '4px'
+                        }}
+                        className="country-item-btn"
+                      >
+                        🌍 Global (USD - $)
+                      </button>
+                    )}
+                    {countries
+                      .filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()))
+                      .map(c => (
+                        <button
+                          key={c.name}
+                          type="button"
+                          onClick={() => {
+                            setTargetCountry(c.name);
+                            setIsCountryDropdownOpen(false);
+                            setCountrySearchQuery('');
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-primary)',
+                            padding: '8px 10px',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderRadius: '4px'
+                          }}
+                          className="country-item-btn"
+                        >
+                          {c.flag} {c.name}
+                        </button>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -217,6 +341,28 @@ export default function AdminNewCampaign() {
                 placeholder="e.g. YouTube Shorts or tutorial URL"
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="logo-url">Campaign Logo URL (Optional)</label>
+            <input 
+              id="logo-url"
+              type="url" 
+              value={logoUrl} 
+              onChange={(e) => setLogoUrl(e.target.value)} 
+              placeholder="e.g. https://example.com/logo.png"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="tags-input">Tags / Badges (Comma-separated)</label>
+            <input 
+              id="tags-input"
+              type="text" 
+              value={tagsInput} 
+              onChange={(e) => setTagsInput(e.target.value)} 
+              placeholder="e.g. Popular, Fast Payout, New"
+            />
           </div>
 
           <div className="form-group">
@@ -320,6 +466,10 @@ export default function AdminNewCampaign() {
         }
         input[type=number] {
           -moz-appearance: textfield;
+        }
+        .country-item-btn:hover {
+          background: rgba(79, 70, 229, 0.08) !important;
+          color: var(--accent-indigo) !important;
         }
       `}</style>
     </div>
