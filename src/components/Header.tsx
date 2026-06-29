@@ -115,8 +115,8 @@ export default function Header() {
                 )}
               </>
             ) : (
-              <button
-                onClick={() => signIn('google')}
+              <Link
+                href="/login"
                 className="role-selector-btn"
                 style={{
                   background: 'linear-gradient(135deg, var(--accent-indigo), #0ea5e9)',
@@ -125,11 +125,15 @@ export default function Header() {
                   border: 'none',
                   padding: '8px 16px',
                   borderRadius: '6px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}
               >
-                🔑 Sign In with Google
-              </button>
+                👤 My Account
+              </Link>
             )}
           </div>
         </div>

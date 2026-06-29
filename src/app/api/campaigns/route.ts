@@ -3,6 +3,13 @@ import { sql } from '../../../lib/db';
 
 export async function GET() {
   try {
+    // Ensure column exists first (Self-migrating)
+    try {
+      await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS assigned_email VARCHAR(255)`;
+    } catch (migErr) {
+      console.warn("Migration warning for assigned_email column:", migErr);
+    }
+
     const campaigns = await sql`SELECT * FROM campaigns ORDER BY created_at DESC`;
     // Map db columns to frontend interface structure
     const formattedCampaigns = campaigns.map(c => ({
@@ -25,7 +32,8 @@ export async function GET() {
       currencySymbol: c.currency_symbol || '$',
       targetCompletions: Number(c.target_completions || 1000),
       videoUrl: c.video_url || undefined,
-      reward: Number(c.reward)
+      reward: Number(c.reward),
+      assignedEmail: c.assigned_email || undefined
     }));
     return NextResponse.json(formattedCampaigns);
   } catch (error: any) {
@@ -52,7 +60,8 @@ export async function POST(request: Request) {
       currencySymbol,
       targetCompletions,
       videoUrl,
-      reward
+      reward,
+      assignedEmail
     } = body;
 
     const platformsStr = Array.isArray(platforms) ? platforms.join(',') : (platforms || 'Web');
@@ -60,16 +69,17 @@ export async function POST(request: Request) {
     const rewardNum = Number(reward) || 0.50;
     const compsCount = Number(targetCompletions) || 1000;
     const finalId = id || `custom-${Date.now()}`;
+    const finalAssignedEmail = assignedEmail || null;
 
     await sql`
       INSERT INTO campaigns (
         id, name, category, platforms, earning_rate, reward, 
         description, long_description, tags, external_url, 
-        target_country, currency, currency_symbol, target_completions, video_url
+        target_country, currency, currency_symbol, target_completions, video_url, assigned_email
       ) VALUES (
         ${finalId}, ${name}, ${category}, ${platformsStr}, ${earningRate}, ${rewardNum},
         ${description}, ${longDescription || description}, ${tagsStr}, ${externalUrl},
-        ${targetCountry || 'Global'}, ${currency || 'USD'}, ${currencySymbol || '$'}, ${compsCount}, ${videoUrl || null}
+        ${targetCountry || 'Global'}, ${currency || 'USD'}, ${currencySymbol || '$'}, ${compsCount}, ${videoUrl || null}, ${finalAssignedEmail}
       )
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
@@ -85,7 +95,8 @@ export async function POST(request: Request) {
         currency = EXCLUDED.currency,
         currency_symbol = EXCLUDED.currency_symbol,
         target_completions = EXCLUDED.target_completions,
-        video_url = EXCLUDED.video_url
+        video_url = EXCLUDED.video_url,
+        assigned_email = EXCLUDED.assigned_email
     `;
 
     return NextResponse.json({ success: true, campaignId: finalId });

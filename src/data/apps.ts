@@ -29,6 +29,7 @@ export interface EarningApp {
   videoUrl?: string;
   referralPool?: ReferralSlot[];
   reward: number; // Single reward amount
+  assignedEmail?: string;
 }
 
 export const EARNING_APPS: EarningApp[] = [

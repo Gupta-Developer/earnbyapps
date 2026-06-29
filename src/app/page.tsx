@@ -10,7 +10,7 @@ export default function Home() {
   const handleLaunchCampaignClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!session) {
       e.preventDefault();
-      signIn('google', { callbackUrl: '/partner/create-campaign' });
+      window.location.href = `/login?callbackUrl=/partner/create-campaign`;
     }
   };
 

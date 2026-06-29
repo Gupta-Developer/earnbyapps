@@ -29,6 +29,7 @@ export default function AdminAllCampaigns() {
   const [editLogo, setEditLogo] = useState('');
   const [editTags, setEditTags] = useState('');
   const [editPlatforms, setEditPlatforms] = useState<('iOS' | 'Android' | 'Web')[]>([]);
+  const [editAssignedEmail, setEditAssignedEmail] = useState('');
 
   // Search state for country inside edit modal
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
@@ -53,6 +54,7 @@ export default function AdminAllCampaigns() {
       setEditLogo(editingApp.logoUrl || '');
       setEditTags(editingApp.tags?.join(', ') || '');
       setEditPlatforms(editingApp.platforms || []);
+      setEditAssignedEmail(editingApp.assignedEmail || '');
     }
   }, [editingApp]);
 
@@ -113,7 +115,8 @@ export default function AdminAllCampaigns() {
       targetCompletions: submissionsCount,
       videoUrl: editVideo || undefined,
       reward: payoutNum,
-      logoUrl: editLogo || undefined
+      logoUrl: editLogo || undefined,
+      assignedEmail: editAssignedEmail || undefined
     };
 
     updateOffer(updatedApp);
@@ -233,53 +236,50 @@ export default function AdminAllCampaigns() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          background: 'rgba(10, 11, 14, 0.4)',
+          backdropFilter: 'blur(8px)',
           zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '12px',
-            width: '100%',
-            maxWidth: '650px',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '24px',
-            boxShadow: 'var(--shadow-premium)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>Modify Campaign: {editingApp.name}</h3>
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }} onClick={() => setEditingApp(null)}>
+          <div 
+            className="edit-slide-drawer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '20px', marginBottom: '24px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>Modify Campaign</h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Configuring parameters for: {editingApp.name}</span>
+              </div>
               <button 
                 onClick={() => setEditingApp(null)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}
+                className="drawer-close-btn"
+                title="Close drawer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveChanges} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="form-group">
-                <label>Task Name *</label>
+            <form onSubmit={handleSaveChanges} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div className="drawer-form-group">
+                <label>Campaign Name *</label>
                 <input 
                   type="text" 
                   value={editName} 
                   onChange={(e) => setEditName(e.target.value)} 
                   required
+                  className="drawer-input"
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="form-group">
+                <div className="drawer-form-group">
                   <label>Category *</label>
                   <select 
                     value={editCategory} 
                     onChange={(e) => setEditCategory(e.target.value as any)}
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
+                    className="drawer-select"
                   >
                     <option value="Gaming">🎮 Gaming</option>
                     <option value="Surveys">📋 Surveys</option>
@@ -300,29 +300,31 @@ export default function AdminAllCampaigns() {
                   </select>
                 </div>
 
-                <div className="form-group" style={{ position: 'relative' }}>
+                <div className="drawer-form-group" style={{ position: 'relative' }}>
                   <label>Target Country *</label>
                   <button
                     type="button"
                     onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                     style={{
                       width: '100%',
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
-                      padding: '10px',
-                      borderRadius: '6px',
-                      color: 'var(--text-primary)',
-                      height: '40px',
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      height: '45px',
                       textAlign: 'left',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between'
+                      justifyContent: 'space-between',
+                      fontSize: '0.9rem',
+                      outline: 'none'
                     }}
                   >
                     <span>
                       {editCountry === 'Global' 
-                        ? '🌍 Global (USD - $)' 
+                        ? '🌍 Global' 
                         : `${countries.find(c => c.name === editCountry)?.flag || '🏳️'} ${editCountry}`
                       }
                     </span>
@@ -332,14 +334,14 @@ export default function AdminAllCampaigns() {
                   {isCountryDropdownOpen && (
                     <div style={{
                       position: 'absolute',
-                      bottom: '100%',
+                      bottom: '102%',
                       left: 0,
                       right: 0,
                       zIndex: 200,
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      boxShadow: 'var(--shadow-premium)',
+                      background: '#161920',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
                       marginBottom: '4px',
                       padding: '8px',
                       display: 'flex',
@@ -353,14 +355,15 @@ export default function AdminAllCampaigns() {
                         placeholder="Search country..."
                         autoFocus
                         style={{
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          border: '1px solid var(--border-color)',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
                           padding: '8px 12px',
-                          borderRadius: '4px',
-                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          color: '#ffffff',
                           fontSize: '0.85rem',
                           width: '100%',
-                          boxSizing: 'border-box'
+                          boxSizing: 'border-box',
+                          outline: 'none'
                         }}
                       />
                       <div style={{
@@ -380,7 +383,7 @@ export default function AdminAllCampaigns() {
                             style={{
                               background: 'transparent',
                               border: 'none',
-                              color: 'var(--text-primary)',
+                              color: '#ffffff',
                               padding: '8px 10px',
                               textAlign: 'left',
                               cursor: 'pointer',
@@ -388,7 +391,7 @@ export default function AdminAllCampaigns() {
                             }}
                             className="country-item-btn"
                           >
-                            🌍 Global (USD - $)
+                            🌍 Global
                           </button>
                         )}
                         {countries
@@ -405,7 +408,7 @@ export default function AdminAllCampaigns() {
                               style={{
                                 background: 'transparent',
                                 border: 'none',
-                                color: 'var(--text-primary)',
+                                color: '#ffffff',
                                 padding: '8px 10px',
                                 textAlign: 'left',
                                 cursor: 'pointer',
@@ -424,7 +427,7 @@ export default function AdminAllCampaigns() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="form-group">
+                <div className="drawer-form-group">
                   <label>Payout per Conversion *</label>
                   <input 
                     type="number" 
@@ -433,10 +436,11 @@ export default function AdminAllCampaigns() {
                     value={editPayout} 
                     onChange={(e) => setEditPayout(e.target.value)} 
                     required
+                    className="drawer-input"
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="drawer-form-group">
                   <label>Total Allowed Submissions *</label>
                   <input 
                     type="number" 
@@ -444,51 +448,68 @@ export default function AdminAllCampaigns() {
                     value={editCompletions} 
                     onChange={(e) => setEditCompletions(e.target.value)} 
                     required
+                    className="drawer-input"
                   />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="form-group">
+                <div className="drawer-form-group">
                   <label>Task Link *</label>
                   <input 
                     type="url" 
                     value={editLink} 
                     onChange={(e) => setEditLink(e.target.value)} 
                     required
+                    className="drawer-input"
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="drawer-form-group">
                   <label>Video Tutorial Link (Optional)</label>
                   <input 
                     type="url" 
                     value={editVideo} 
                     onChange={(e) => setEditVideo(e.target.value)} 
+                    className="drawer-input"
                   />
                 </div>
               </div>
 
-              <div className="form-group">
+              <div className="drawer-form-group">
                 <label>Campaign Logo URL (Optional)</label>
                 <input 
                   type="url" 
                   value={editLogo} 
                   onChange={(e) => setEditLogo(e.target.value)} 
                   placeholder="https://example.com/logo.png"
+                  className="drawer-input"
                 />
               </div>
 
-              <div className="form-group">
+              <div className="drawer-form-group">
                 <label>Tags / Badges (Comma-separated)</label>
                 <input 
                   type="text" 
                   value={editTags} 
                   onChange={(e) => setEditTags(e.target.value)} 
+                  placeholder="Popular, Fast Payout"
+                  className="drawer-input"
                 />
               </div>
 
-              <div className="form-group">
+              <div className="drawer-form-group">
+                <label>Assigned Partner / Developer Email (Optional)</label>
+                <input 
+                  type="email" 
+                  value={editAssignedEmail} 
+                  onChange={(e) => setEditAssignedEmail(e.target.value)} 
+                  placeholder="e.g. partner@example.com (links campaign to their partner dashboard)"
+                  className="drawer-input"
+                />
+              </div>
+
+              <div className="drawer-form-group">
                 <label>Platforms *</label>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   {['iOS', 'Android', 'Web'].map(plat => (
@@ -497,14 +518,15 @@ export default function AdminAllCampaigns() {
                       key={plat}
                       onClick={() => handleTogglePlatform(plat as any)}
                       style={{
-                        padding: '8px 16px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        background: editPlatforms.includes(plat as any) ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
-                        color: editPlatforms.includes(plat as any) ? 'var(--accent-indigo)' : 'var(--text-secondary)',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        background: editPlatforms.includes(plat as any) ? 'rgba(6, 182, 212, 0.12)' : 'transparent',
+                        color: editPlatforms.includes(plat as any) ? 'var(--accent-cyan)' : 'var(--text-secondary)',
                         fontWeight: 'bold',
                         cursor: 'pointer',
-                        transition: 'all 0.2s'
+                        transition: 'all 0.2s',
+                        outline: 'none'
                       }}
                     >
                       {plat}
@@ -513,14 +535,26 @@ export default function AdminAllCampaigns() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                <button type="submit" className="glow-btn-cyan" style={{ flex: 1, padding: '10px' }}>
-                  Save Changes
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                <button type="submit" className="glow-btn-cyan" style={{ flex: 1, padding: '12px', borderRadius: '8px' }}>
+                  Save Parameters
                 </button>
                 <button 
                   type="button" 
                   onClick={() => setEditingApp(null)} 
-                  style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#ffffff',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
                   Cancel
                 </button>
@@ -587,6 +621,77 @@ export default function AdminAllCampaigns() {
         .country-item-btn:hover {
           background: rgba(79, 70, 229, 0.08) !important;
           color: var(--accent-indigo) !important;
+        }
+        
+        /* Premium Sliding Edit Drawer */
+        .edit-slide-drawer {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: 100%;
+          max-width: 520px;
+          background: linear-gradient(180deg, #11131e 0%, #0c0d14 100%);
+          border-left: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: -10px 0 50px rgba(0,0,0,0.8);
+          z-index: 1001;
+          padding: 36px 28px;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideIn {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        .drawer-form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-bottom: 20px;
+        }
+        .drawer-form-group label {
+          font-size: 0.76rem;
+          text-transform: uppercase;
+          color: var(--text-secondary);
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        }
+        .drawer-input, .drawer-select {
+          width: 100%;
+          background: rgba(0, 0, 0, 0.25) !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          padding: 12px 16px !important;
+          border-radius: 8px !important;
+          color: #ffffff !important;
+          font-size: 0.9rem !important;
+          outline: none !important;
+          transition: all 0.2s ease !important;
+          box-sizing: border-box !important;
+        }
+        .drawer-input:focus, .drawer-select:focus {
+          border-color: var(--accent-cyan) !important;
+          background: rgba(6, 182, 212, 0.03) !important;
+          box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15) !important;
+        }
+        .drawer-close-btn {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 50%;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .drawer-close-btn:hover {
+          background: rgba(239, 68, 68, 0.1);
+          border-color: rgba(239, 68, 68, 0.2);
+          color: #ef4444;
         }
       `}</style>
     </div>

@@ -5,7 +5,7 @@ import { useApp } from '../../../context/AppContext';
 import { EarningApp } from '../../../data/apps';
 
 export default function PartnerAssignedCampaigns() {
-  const { apps } = useApp();
+  const { apps, userProfile } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [selectedCampaign, setSelectedCampaign] = useState<EarningApp | null>(null);
@@ -44,9 +44,9 @@ export default function PartnerAssignedCampaigns() {
         earningRate: '$1.20 / action',
         averageEarningsPerDay: 1.20,
         rating: 4.6,
-        reviewsCount: 1200,
-        description: 'Gather verified demographics survey reviews.',
-        longDescription: 'High-quality survey panel conversions for research purposes.',
+        reviewsCount: 1400,
+        description: 'Collect demographics and user feedback surveys.',
+        longDescription: 'High quality panel access with advanced profiling logic and fraud controls.',
         tags: ['Surveys', 'Multiplatform'],
         actionText: 'Join Prime Opinion',
         tasks: [
@@ -59,9 +59,10 @@ export default function PartnerAssignedCampaigns() {
       }
     ];
 
-    // Get live approved campaigns from context (specifically ones created dynamically/by partner)
+    // Get live approved campaigns from context (specifically ones assigned to this partner's email)
+    const partnerEmail = userProfile?.email || '';
     const liveCustom = apps
-      .filter(app => app.id.startsWith('custom-'))
+      .filter(app => app.assignedEmail && app.assignedEmail.toLowerCase() === partnerEmail.toLowerCase())
       .map(app => {
         // Calculate completions and budget info based on typical target metrics
         const target = app.targetCompletions || 1000;
@@ -77,7 +78,7 @@ export default function PartnerAssignedCampaigns() {
       });
 
     return [...liveCustom, ...mockAssigned];
-  }, [apps]);
+  }, [apps, userProfile]);
 
   // Filter campaigns
   const filteredCampaigns = useMemo(() => {
