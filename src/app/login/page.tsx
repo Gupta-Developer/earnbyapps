@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
   const { status, data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -520,5 +520,25 @@ export default function LoginPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#06080c',
+        color: '#ffffff',
+        fontFamily: 'sans-serif'
+      }}>
+        Loading Account Portal...
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

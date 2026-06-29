@@ -85,8 +85,7 @@ export default function AdminNewCampaign() {
       targetCompletions: submissionsCount,
       videoUrl: videoUrl || undefined,
       reward: payoutNum,
-      logoUrl: logoUrl || undefined,
-      difficulty: difficulty
+      logoUrl: logoUrl || undefined
     });
 
     setSuccess(true);
