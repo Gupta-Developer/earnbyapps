@@ -49,102 +49,87 @@ export default function Header() {
 
           {/* User role menu (Auth mockup) */}
           <div className="auth-menu-container">
-            <button 
-              className="role-selector-btn" 
-              onClick={() => setShowAuthDropdown(!showAuthDropdown)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              {session && session.user?.image ? (
-                <img 
-                  src={session.user.image} 
-                  alt="User avatar" 
-                  style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} 
-                />
-              ) : (
-                <span>👤</span>
-              )}
-              <span className="role-text-lbl">
-                {userRole === 'user' && userProfile ? userProfile.fullName : userRole}
-              </span>
-              <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▼</span>
-            </button>
+            {session && session.user ? (
+              <>
+                <button 
+                  className="role-selector-btn" 
+                  onClick={() => setShowAuthDropdown(!showAuthDropdown)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {session.user.image ? (
+                    <img 
+                      src={session.user.image} 
+                      alt="User avatar" 
+                      style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    <span>👤</span>
+                  )}
+                  <span className="role-text-lbl">
+                    {session.user.name || 'User'}
+                  </span>
+                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▼</span>
+                </button>
 
-            {showAuthDropdown && (
-              <div className="glass-card auth-dropdown">
-
-                {session && session.user ? (
-                  <div style={{ padding: '8px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid var(--border-color)', margin: '4px 0' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px' }}>Google Account</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
-                      {session.user.image ? (
-                        <img 
-                          src={session.user.image} 
-                          alt="Google avatar" 
-                          style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} 
-                        />
-                      ) : (
-                        <span>👤</span>
-                      )}
-                      <span>{session.user.name}</span>
+                {showAuthDropdown && (
+                  <div className="glass-card auth-dropdown">
+                    <div style={{ padding: '8px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid var(--border-color)', margin: '4px 0' }}>
+                      <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px' }}>Google Account</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
+                        {session.user.image ? (
+                          <img 
+                            src={session.user.image} 
+                            alt="Google avatar" 
+                            style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          <span>👤</span>
+                        )}
+                        <span>{session.user.name}</span>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📧 {session.user.email}</div>
+                      <button 
+                        onClick={() => {
+                          setShowAuthDropdown(false);
+                          signOut();
+                        }}
+                        className="dropdown-item link-item"
+                        style={{ padding: '6px 0 0', marginTop: '8px', border: 'none', background: 'transparent', width: '100%', textAlign: 'left', fontSize: '0.78rem', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}
+                      >
+                        🚪 Sign Out
+                      </button>
                     </div>
-                    <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📧 {session.user.email}</div>
-                    <button 
-                      onClick={() => {
-                        setShowAuthDropdown(false);
-                        signOut();
-                      }}
-                      className="dropdown-item link-item"
-                      style={{ padding: '6px 0 0', marginTop: '8px', border: 'none', background: 'transparent', width: '100%', textAlign: 'left', fontSize: '0.78rem', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                      🚪 Sign Out
-                    </button>
+
+                    {userRole === 'user' && (
+                      <Link href="/partner/create-campaign" onClick={() => setShowAuthDropdown(false)} className="dropdown-item link-item">
+                        ➡️ Go to Partner Portal
+                      </Link>
+                    )}
+
+                    {userRole === 'admin' && (
+                      <Link href="/admin" onClick={() => setShowAuthDropdown(false)} className="dropdown-item link-item">
+                        ➡️ Go to Admin Moderation
+                      </Link>
+                    )}
                   </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setShowAuthDropdown(false);
-                      signIn('google');
-                    }}
-                    className="dropdown-item active"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--accent-indigo), #0ea5e9)',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      padding: '10px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      marginTop: '8px',
-                      display: 'block',
-                      width: '100%'
-                    }}
-                  >
-                    🔑 Sign In with Google
-                  </button>
                 )}
-
-                {userRole === 'user' && session && (
-                  <Link href="/partner/create-campaign" onClick={() => setShowAuthDropdown(false)} className="dropdown-item link-item">
-                    ➡️ Go to Partner Portal
-                  </Link>
-                )}
-
-                {userRole === 'admin' && (
-                  <Link href="/admin" onClick={() => setShowAuthDropdown(false)} className="dropdown-item link-item">
-                    ➡️ Go to Admin Moderation
-                  </Link>
-                )}
-
-                {userRole !== 'user' && (
-                  <button 
-                    onClick={() => { logout(); setShowAuthDropdown(false); }} 
-                    className="dropdown-item logout-btn"
-                  >
-                    Reset Session
-                  </button>
-                )}
-              </div>
+              </>
+            ) : (
+              <button
+                onClick={() => signIn('google')}
+                className="role-selector-btn"
+                style={{
+                  background: 'linear-gradient(135deg, var(--accent-indigo), #0ea5e9)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔑 Sign In with Google
+              </button>
             )}
           </div>
         </div>
