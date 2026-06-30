@@ -286,6 +286,25 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     loadCampaigns();
   }, []);
 
+  // Load submissions from database API
+  useEffect(() => {
+    async function loadSubmissions() {
+      try {
+        const res = await fetch('/api/submissions');
+        if (res.ok) {
+          const dbSubmissions = await res.json();
+          if (dbSubmissions && dbSubmissions.length > 0) {
+            setSubmissions(dbSubmissions);
+            localStorage.setItem('eb_submissions', JSON.stringify(dbSubmissions));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load submissions from DB API, using local storage fallback", e);
+      }
+    }
+    loadSubmissions();
+  }, []);
+
   // Sync theme changes to body class
   useEffect(() => {
     if (theme === 'light') {
@@ -555,6 +574,13 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     };
 
     setSubmissions(prev => [newSubmission, ...prev]);
+
+    // Persist to Neon Postgres DB API
+    fetch('/api/submissions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSubmission)
+    }).catch(err => console.error("Failed to persist submission in database:", err));
   };
 
   const approveSubmission = (submissionId: string) => {
@@ -581,6 +607,13 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
             return app;
           }));
         }
+        // Persist to Neon Postgres DB API
+        fetch('/api/submissions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: submissionId, status: 'Approved' })
+        }).catch(err => console.error("Failed to approve submission in database:", err));
+
         return { ...sub, status: 'Approved' };
       }
       return sub;
@@ -590,6 +623,13 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const rejectSubmission = (submissionId: string) => {
     setSubmissions(prev => prev.map(sub => {
       if (sub.id === submissionId && sub.status === 'Pending') {
+        // Persist to Neon Postgres DB API
+        fetch('/api/submissions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: submissionId, status: 'Rejected' })
+        }).catch(err => console.error("Failed to reject submission in database:", err));
+
         return { ...sub, status: 'Rejected' };
       }
       return sub;

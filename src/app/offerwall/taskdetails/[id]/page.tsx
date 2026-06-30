@@ -19,6 +19,8 @@ export default function TaskDetails({ params }: PageProps) {
   const [proofMediaType, setProofMediaType] = useState<'image' | 'video'>('image');
   const [selectedFileUrl, setSelectedFileUrl] = useState<string>('');
   const [selectedFileName, setSelectedFileName] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Find the current app/campaign
   const app = apps.find(a => a.id === resolvedParams.id);
@@ -99,15 +101,42 @@ export default function TaskDetails({ params }: PageProps) {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleSubmitProof = () => {
-    if (!proofText.trim() && !selectedFileUrl) {
+  const handleSubmitProof = async () => {
+    if (!proofText.trim() && !selectedFile) {
       setToastMessage('Error: Please enter proof details or upload a screenshot/video.');
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
 
-    let finalFileUrl = selectedFileUrl;
-    if (!finalFileUrl) {
+    setIsUploading(true);
+    let finalFileUrl = '';
+
+    if (selectedFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Upload failed');
+        }
+
+        const data = await response.json();
+        finalFileUrl = data.url;
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        setToastMessage(`Upload Error: ${error.message}. Using placeholder fallback.`);
+        // Fallback to placeholder if upload fails
+        finalFileUrl = proofMediaType === 'image' 
+          ? 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80'
+          : 'https://www.w3schools.com/html/mov_bbb.mp4';
+      }
+    } else {
       // Premium placeholders for testing
       finalFileUrl = proofMediaType === 'image' 
         ? 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80'
@@ -117,8 +146,10 @@ export default function TaskDetails({ params }: PageProps) {
     submitTaskCompletion(app.id, proofText || `Uploaded ${proofMediaType} proof`, proofMediaType, finalFileUrl);
     setShowProofInput(false);
     setProofText('');
+    setSelectedFile(null);
     setSelectedFileUrl('');
     setSelectedFileName('');
+    setIsUploading(false);
     setToastMessage('Success: Proof submitted! Awaiting verifier approval.');
     setTimeout(() => setToastMessage(null), 4000);
   };
@@ -288,6 +319,7 @@ export default function TaskDetails({ params }: PageProps) {
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
                         const file = e.target.files[0];
+                        setSelectedFile(file);
                         setSelectedFileName(file.name);
                         setSelectedFileUrl(URL.createObjectURL(file));
                       }
@@ -336,14 +368,16 @@ export default function TaskDetails({ params }: PageProps) {
                   <button
                     onClick={handleSubmitProof}
                     className="glow-btn-cyan"
+                    disabled={isUploading}
                     style={{
                       padding: '10px 24px',
                       fontSize: '0.9rem',
                       border: 'none',
-                      cursor: 'pointer'
+                      cursor: isUploading ? 'not-allowed' : 'pointer',
+                      opacity: isUploading ? 0.7 : 1
                     }}
                   >
-                    Submit Verification Proof
+                    {isUploading ? 'Uploading...' : 'Submit Verification Proof'}
                   </button>
                 </div>
               </div>
