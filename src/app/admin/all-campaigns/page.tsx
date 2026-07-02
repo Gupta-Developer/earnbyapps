@@ -247,9 +247,9 @@ export default function AdminAllCampaigns() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '20px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px', marginBottom: '24px' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>Modify Campaign</h3>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Modify Campaign</h3>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Configuring parameters for: {editingApp.name}</span>
               </div>
               <button 
@@ -307,11 +307,11 @@ export default function AdminAllCampaigns() {
                     onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                     style={{
                       width: '100%',
-                      background: 'rgba(0, 0, 0, 0.25)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: 'var(--bg-dark)',
+                      border: '1px solid var(--border-color)',
                       padding: '12px 16px',
                       borderRadius: '8px',
-                      color: '#ffffff',
+                      color: 'var(--text-primary)',
                       height: '45px',
                       textAlign: 'left',
                       cursor: 'pointer',
@@ -338,10 +338,10 @@ export default function AdminAllCampaigns() {
                       left: 0,
                       right: 0,
                       zIndex: 200,
-                      background: '#161920',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
                       borderRadius: '8px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                      boxShadow: 'var(--shadow-premium)',
                       marginBottom: '4px',
                       padding: '8px',
                       display: 'flex',
@@ -355,11 +355,11 @@ export default function AdminAllCampaigns() {
                         placeholder="Search country..."
                         autoFocus
                         style={{
-                          background: 'rgba(255, 255, 255, 0.04)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          background: 'var(--bg-dark)',
+                          border: '1px solid var(--border-color)',
                           padding: '8px 12px',
                           borderRadius: '6px',
-                          color: '#ffffff',
+                          color: 'var(--text-primary)',
                           fontSize: '0.85rem',
                           width: '100%',
                           boxSizing: 'border-box',
@@ -383,7 +383,7 @@ export default function AdminAllCampaigns() {
                             style={{
                               background: 'transparent',
                               border: 'none',
-                              color: '#ffffff',
+                              color: 'var(--text-primary)',
                               padding: '8px 10px',
                               textAlign: 'left',
                               cursor: 'pointer',
@@ -408,7 +408,7 @@ export default function AdminAllCampaigns() {
                               style={{
                                 background: 'transparent',
                                 border: 'none',
-                                color: '#ffffff',
+                                color: 'var(--text-primary)',
                                 padding: '8px 10px',
                                 textAlign: 'left',
                                 cursor: 'pointer',
@@ -455,12 +455,13 @@ export default function AdminAllCampaigns() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="drawer-form-group">
-                  <label>Task Link *</label>
+                  <label>Task External Link *</label>
                   <input 
                     type="url" 
                     value={editLink} 
                     onChange={(e) => setEditLink(e.target.value)} 
                     required
+                    placeholder="https://example.com/task"
                     className="drawer-input"
                   />
                 </div>
@@ -471,31 +472,34 @@ export default function AdminAllCampaigns() {
                     type="url" 
                     value={editVideo} 
                     onChange={(e) => setEditVideo(e.target.value)} 
+                    placeholder="https://youtube.com/..."
                     className="drawer-input"
                   />
                 </div>
               </div>
 
-              <div className="drawer-form-group">
-                <label>Campaign Logo URL (Optional)</label>
-                <input 
-                  type="url" 
-                  value={editLogo} 
-                  onChange={(e) => setEditLogo(e.target.value)} 
-                  placeholder="https://example.com/logo.png"
-                  className="drawer-input"
-                />
-              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="drawer-form-group">
+                  <label>Campaign Logo URL (Optional)</label>
+                  <input 
+                    type="url" 
+                    value={editLogo} 
+                    onChange={(e) => setEditLogo(e.target.value)} 
+                    placeholder="https://example.com/logo.png"
+                    className="drawer-input"
+                  />
+                </div>
 
-              <div className="drawer-form-group">
-                <label>Tags / Badges (Comma-separated)</label>
-                <input 
-                  type="text" 
-                  value={editTags} 
-                  onChange={(e) => setEditTags(e.target.value)} 
-                  placeholder="Popular, Fast Payout"
-                  className="drawer-input"
-                />
+                <div className="drawer-form-group">
+                  <label>Tags (Comma separated)</label>
+                  <input 
+                    type="text" 
+                    value={editTags} 
+                    onChange={(e) => setEditTags(e.target.value)} 
+                    placeholder="e.g. Premium, Signup, Hot"
+                    className="drawer-input"
+                  />
+                </div>
               </div>
 
               <div className="drawer-form-group">
@@ -520,9 +524,9 @@ export default function AdminAllCampaigns() {
                       style={{
                         padding: '10px 20px',
                         borderRadius: '8px',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        background: editPlatforms.includes(plat as any) ? 'rgba(6, 182, 212, 0.12)' : 'transparent',
-                        color: editPlatforms.includes(plat as any) ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                        border: '1px solid var(--border-color)',
+                        background: editPlatforms.includes(plat as any) ? 'rgba(13, 148, 136, 0.15)' : 'transparent',
+                        color: editPlatforms.includes(plat as any) ? 'var(--accent-teal)' : 'var(--text-secondary)',
                         fontWeight: 'bold',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
@@ -535,7 +539,7 @@ export default function AdminAllCampaigns() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
                 <button type="submit" className="glow-btn-cyan" style={{ flex: 1, padding: '12px', borderRadius: '8px' }}>
                   Save Parameters
                 </button>
@@ -546,14 +550,14 @@ export default function AdminAllCampaigns() {
                     flex: 1,
                     padding: '12px',
                     background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    color: '#ffffff',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     fontWeight: 'bold',
                     transition: 'all 0.2s'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-color)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
                   Cancel
@@ -631,9 +635,9 @@ export default function AdminAllCampaigns() {
           bottom: 0;
           width: 100%;
           max-width: 520px;
-          background: linear-gradient(180deg, #11131e 0%, #0c0d14 100%);
-          border-left: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: -10px 0 50px rgba(0,0,0,0.8);
+          background: var(--bg-card);
+          border-left: 1px solid var(--border-color);
+          box-shadow: var(--shadow-premium);
           z-index: 1001;
           padding: 36px 28px;
           display: flex;
@@ -660,24 +664,24 @@ export default function AdminAllCampaigns() {
         }
         .drawer-input, .drawer-select {
           width: 100%;
-          background: rgba(0, 0, 0, 0.25) !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          background: var(--bg-dark) !important;
+          border: 1px solid var(--border-color) !important;
           padding: 12px 16px !important;
           border-radius: 8px !important;
-          color: #ffffff !important;
+          color: var(--text-primary) !important;
           font-size: 0.9rem !important;
           outline: none !important;
           transition: all 0.2s ease !important;
           box-sizing: border-box !important;
         }
         .drawer-input:focus, .drawer-select:focus {
-          border-color: var(--accent-cyan) !important;
-          background: rgba(6, 182, 212, 0.03) !important;
-          box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15) !important;
+          border-color: var(--accent-teal) !important;
+          background: rgba(13, 148, 136, 0.03) !important;
+          box-shadow: 0 0 0 3px var(--accent-teal-glow) !important;
         }
         .drawer-close-btn {
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: var(--bg-dark);
+          border: 1px solid var(--border-color);
           border-radius: 50%;
           width: 36px;
           height: 36px;
