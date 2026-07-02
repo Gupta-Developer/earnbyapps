@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { sql } from "../../../../lib/db";
 import crypto from "crypto";
 
-const handler = NextAuth({
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -112,6 +112,8 @@ const handler = NextAuth({
       return session;
     },
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
