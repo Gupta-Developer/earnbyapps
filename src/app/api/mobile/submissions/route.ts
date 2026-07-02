@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     const campaign = campaigns[0];
     const appName = campaign.name;
     const reward = Number(campaign.reward);
-    const verifierEmail = campaign.assigned_email || 'admin@earnbyapps.com';
+    const verifierEmail = campaign.assigned_email || 'admin';
     const verificationType = campaign.assigned_email ? 'creator' : 'admin';
 
     const submissionId = `sub-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
