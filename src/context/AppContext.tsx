@@ -91,6 +91,7 @@ interface AppContextType {
   logout: () => void;
   submitOffer: (app: Omit<EarningApp, 'id' | 'rating' | 'reviewsCount' | 'difficulty'>) => void;
   updateOffer: (app: EarningApp) => void;
+  deleteOffer: (id: string) => void;
   approveOffer: (id: string, updatedApp?: EarningApp) => void;
   rejectOffer: (id: string) => void;
   submitPartnershipLead: (lead: Omit<PartnershipLead, 'id' | 'status' | 'createdAt' | 'partnerName' | 'partnerEmail'>) => void;
@@ -433,6 +434,25 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
+  const deleteOffer = async (id: string) => {
+    // Update local state
+    setApps(prev => {
+      const nextApps = prev.filter(app => app.id !== id);
+      localStorage.setItem('eb_apps', JSON.stringify(nextApps));
+      return nextApps;
+    });
+
+    // Delete from Neon Database
+    try {
+      await fetch(`/api/campaigns?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+      console.log("Successfully deleted campaign from database");
+    } catch (e) {
+      console.error("Error deleting campaign from database API:", e);
+    }
+  };
+
   const approveOffer = async (id: string, updatedApp?: EarningApp) => {
     const appToApprove = updatedApp || pendingApps.find(app => app.id === id);
     if (!appToApprove) return;
@@ -652,6 +672,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       logout,
       submitOffer,
       updateOffer,
+      deleteOffer,
       approveOffer,
       rejectOffer,
       submitPartnershipLead,

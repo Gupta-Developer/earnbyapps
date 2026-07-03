@@ -61,7 +61,7 @@ export const authOptions = {
     signIn: "/login"
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: { user: any; account: any; profile?: any }) {
       if (account?.provider === "google" && user && user.email) {
         try {
           // Check if the user exists in our neon database users table
@@ -83,14 +83,14 @@ export const authOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user?: any }) {
       if (user) {
         token.role = (user as any).role;
         token.balance = (user as any).balance;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       if (session.user) {
         try {
           const dbUsers = await sql`SELECT role, balance FROM users WHERE email = ${session.user.email}`;

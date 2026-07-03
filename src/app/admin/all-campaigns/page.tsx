@@ -14,8 +14,8 @@ const COUNTRY_CURRENCIES: Record<string, { currency: string; symbol: string }> =
 };
 
 export default function AdminAllCampaigns() {
-  const { apps, submissions, updateOffer } = useApp();
-  const [deactivatedIds, setDeactivatedIds] = useState<string[]>([]);
+  const { apps, submissions, updateOffer, deleteOffer } = useApp();
+// Remove deactivatedIds state since it is now synced directly to the DB
 
   // Edit campaign states
   const [editingApp, setEditingApp] = useState<EarningApp | null>(null);
@@ -35,12 +35,9 @@ export default function AdminAllCampaigns() {
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
 
-  useEffect(() => {
-    const stored = localStorage.getItem('eb_admin_deactivated');
-    if (stored) {
-      setDeactivatedIds(JSON.parse(stored));
-    }
-  }, []);
+  // Country filter state
+  const [filterCountry, setFilterCountry] = useState('All');
+
 
   useEffect(() => {
     if (editingApp) {
@@ -59,14 +56,13 @@ export default function AdminAllCampaigns() {
   }, [editingApp]);
 
   const handleToggleDeactivate = (id: string) => {
-    let nextIds: string[];
-    if (deactivatedIds.includes(id)) {
-      nextIds = deactivatedIds.filter(x => x !== id);
-    } else {
-      nextIds = [...deactivatedIds, id];
-    }
-    setDeactivatedIds(nextIds);
-    localStorage.setItem('eb_admin_deactivated', JSON.stringify(nextIds));
+    const campaign = apps.find(a => a.id === id);
+    if (!campaign) return;
+    const updated = {
+      ...campaign,
+      isActive: campaign.isActive === false ? true : false
+    };
+    updateOffer(updated);
   };
 
   const getCurrencyDetails = (countryName: string) => {
@@ -130,6 +126,28 @@ export default function AdminAllCampaigns() {
         <p className="card-subheading">Enable/disable or modify active campaigns currently published on the Offerwall.</p>
       </div>
 
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', gap: '8px', alignItems: 'center' }}>
+        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Filter Target Country:</span>
+        <select 
+          value={filterCountry} 
+          onChange={(e) => setFilterCountry(e.target.value)}
+          style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '0.82rem', outline: 'none' }}
+        >
+          <option value="All">🌐 All Countries</option>
+          <option value="Global">🌐 Global</option>
+          {Array.from(new Set(apps.map(a => a.targetCountry).filter(Boolean)))
+            .filter(c => c !== 'Global')
+            .map(c => {
+              const matchedCountry = countries.find(co => co.name === c);
+              return (
+                <option key={c} value={c}>
+                  {matchedCountry?.flag || '🏳️'} {c}
+                </option>
+              );
+            })}
+        </select>
+      </div>
+
       <div className="table-responsive-container">
         <table className="user-table">
           <thead>
@@ -144,18 +162,27 @@ export default function AdminAllCampaigns() {
             </tr>
           </thead>
           <tbody>
-            {apps.map((app) => {
-              const isDeactivated = deactivatedIds.includes(app.id);
-              const completedCount = submissions.filter(s => s.appId === app.id && s.status === 'Approved').length;
-              const target = app.targetCompletions || 1000;
-              const progressPercentage = Math.min(100, (completedCount / target) * 100);
-              
-              return (
-                <tr key={app.id}>
-                  <td>
-                    <strong style={{ display: 'block' }}>{app.name}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Rating: {app.rating} ★ ({app.reviewsCount} reviews)</span>
-                  </td>
+            {apps
+              .filter(app => filterCountry === 'All' || app.targetCountry === filterCountry)
+              .map((app) => {
+                const isDeactivated = app.isActive === false;
+                const completedCount = submissions.filter(s => s.appId === app.id && s.status === 'Approved').length;
+                const target = app.targetCompletions || 1000;
+                const progressPercentage = Math.min(100, (completedCount / target) * 100);
+                const matchedCountryObj = countries.find(c => c.name === app.targetCountry);
+                const flag = app.targetCountry === 'Global' ? '🌐' : (matchedCountryObj?.flag || '🏳️');
+
+                return (
+                  <tr key={app.id}>
+                    <td>
+                      <strong style={{ display: 'block' }}>{app.name}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '0.7rem', padding: '1px 6px', background: 'rgba(255,255,255,0.06)', borderRadius: '10px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          {flag} {app.targetCountry || 'Global'}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Rating: {app.rating} ★ ({app.reviewsCount} reviews)</span>
+                      </div>
+                    </td>
                   <td>
                     <span className="app-cat-badge">{getCategoryIcon(app.category)} {app.category}</span>
                   </td>
@@ -219,6 +246,25 @@ export default function AdminAllCampaigns() {
                         }}
                       >
                         ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${app.name}"?`)) {
+                            deleteOffer(app.id);
+                          }
+                        }}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          color: '#ef4444',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        🗑️ Delete
                       </button>
                     </div>
                   </td>

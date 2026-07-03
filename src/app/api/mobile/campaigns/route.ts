@@ -12,11 +12,16 @@ export async function GET(request: Request) {
     // Ensure columns exist (Self-migrating)
     try {
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS assigned_email VARCHAR(255)`;
+      await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
     } catch (migErr) {
-      console.warn("Migration warning for assigned_email column:", migErr);
+      console.warn("Migration warning for assigned_email/is_active column:", migErr);
     }
 
-    const campaigns = await sql`SELECT * FROM campaigns ORDER BY created_at DESC`;
+    const campaigns = await sql`
+      SELECT * FROM campaigns 
+      WHERE is_active = true 
+      ORDER BY created_at DESC
+    `;
     
     // Map db columns to interface structure suitable for React Native
     const formattedCampaigns = campaigns.map(c => ({

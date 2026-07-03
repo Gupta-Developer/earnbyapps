@@ -30,6 +30,7 @@ export interface EarningApp {
   referralPool?: ReferralSlot[];
   reward: number; // Single reward amount
   assignedEmail?: string;
+  isActive?: boolean;
 }
 
 export const EARNING_APPS: EarningApp[] = [

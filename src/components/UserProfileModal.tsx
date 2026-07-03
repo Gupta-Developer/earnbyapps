@@ -5,18 +5,6 @@ import { useApp } from '../context/AppContext';
 import { countries } from '../data/countries';
 import { useSession } from 'next-auth/react';
 
-const PAYMENT_METHODS = {
-  India: [
-    { value: 'UPI ID', label: '🇮🇳 UPI ID (GPay / PhonePe / BHIM)', placeholder: 'e.g. name@okhdfcbank' },
-    { value: 'Paytm Wallet Number', label: '📲 Paytm Wallet Mobile Number', placeholder: 'e.g. 9876543210' },
-    { value: 'Bank Transfer (India)', label: '🏦 Bank Account (A/C & IFSC)', placeholder: 'e.g. Account: 12345678, IFSC: SBIN000123' }
-  ],
-  Global: [
-    { value: 'PayPal Email', label: '💳 PayPal Email', placeholder: 'e.g. billing@paypal.com' },
-    { value: 'Crypto Wallet (USDT/USDC)', label: '🪙 Crypto Wallet Address (USDT/USDC)', placeholder: 'e.g. TRC20 or BEP20 address' },
-    { value: 'Bank Transfer (International)', label: '🏦 Bank Wire (IBAN & SWIFT)', placeholder: 'e.g. IBAN: GB29..., SWIFT: MIDL...' }
-  ]
-};
 
 export default function UserProfileModal() {
   const { userRole, userProfile, updateUserProfile } = useApp();
@@ -34,6 +22,7 @@ export default function UserProfileModal() {
   const [payoutMethod, setPayoutMethod] = useState('');
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [dynamicMethods, setDynamicMethods] = useState<{ value: string; label: string; placeholder: string }[]>([]);
 
   // Automatically trigger profile setup if logged in as 'user' but no profile exists
   useEffect(() => {
@@ -100,12 +89,34 @@ export default function UserProfileModal() {
     };
   }, [userProfile]);
 
-  // Synchronize payment methods when country changes
+  // Fetch available payout methods whenever country changes
   useEffect(() => {
-    const methods = selectedCountry.name === 'India' ? PAYMENT_METHODS.India : PAYMENT_METHODS.Global;
-    if (!methods.some(m => m.value === payoutMethod)) {
-      setPayoutMethod(methods[0].value);
+    let active = true;
+    async function fetchMethods() {
+      try {
+        const res = await fetch(`/api/payment-methods?country=${encodeURIComponent(selectedCountry.name)}`);
+        if (!res.ok) throw new Error('Failed to fetch payment methods');
+        const data = await res.json();
+        const mapped = data.map((item: any) => ({
+          value: item.name,
+          label: item.label,
+          placeholder: item.placeholder
+        }));
+        
+        if (active) {
+          setDynamicMethods(mapped);
+          if (mapped.length > 0 && !mapped.some((m: any) => m.value === payoutMethod)) {
+            setPayoutMethod(mapped[0].value);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading country payment methods:', err);
+      }
     }
+    fetchMethods();
+    return () => {
+      active = false;
+    };
   }, [selectedCountry, payoutMethod]);
 
   if (!isOpen) return null;
@@ -321,7 +332,7 @@ export default function UserProfileModal() {
                 className="country-select"
                 style={{ width: '100%' }}
               >
-                {(selectedCountry.name === 'India' ? PAYMENT_METHODS.India : PAYMENT_METHODS.Global).map((method) => (
+                {dynamicMethods.map((method) => (
                   <option key={method.value} value={method.value}>
                     {method.label}
                   </option>
@@ -337,8 +348,7 @@ export default function UserProfileModal() {
                 id="modal-payment-details"
                 type="text" 
                 placeholder={
-                  (selectedCountry.name === 'India' ? PAYMENT_METHODS.India : PAYMENT_METHODS.Global)
-                    .find(m => m.value === payoutMethod)?.placeholder || 'Enter details'
+                  dynamicMethods.find(m => m.value === payoutMethod)?.placeholder || 'Enter details'
                 }
                 value={paymentDetails}
                 onChange={(e) => setPaymentDetails(e.target.value)}
