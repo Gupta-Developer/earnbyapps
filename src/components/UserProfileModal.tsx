@@ -6,6 +6,13 @@ import { countries } from '../data/countries';
 import { useSession } from 'next-auth/react';
 
 
+interface SavedPayoutMethod {
+  id: string;
+  methodName: string;
+  isPreferred: boolean;
+  details: { [key: string]: string };
+}
+
 export default function UserProfileModal() {
   const { userRole, userProfile, updateUserProfile } = useApp();
   const { data: session } = useSession();
@@ -21,8 +28,13 @@ export default function UserProfileModal() {
   const [paymentDetails, setPaymentDetails] = useState('');
   const [payoutMethod, setPayoutMethod] = useState('');
 
+  // Multiple Payout Methods States
+  const [savedPayoutMethods, setSavedPayoutMethods] = useState<SavedPayoutMethod[]>([]);
+  const [showAddPayoutForm, setShowAddPayoutForm] = useState(false);
+  const [newPayoutDetails, setNewPayoutDetails] = useState<{ [key: string]: string }>({});
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [dynamicMethods, setDynamicMethods] = useState<{ value: string; label: string; placeholder: string }[]>([]);
+  const [dynamicMethods, setDynamicMethods] = useState<{ value: string; label: string; placeholder: string; fields?: string | any[]; placeholderType?: string }[]>([]);
 
   // Automatically trigger profile setup if logged in as 'user' but no profile exists
   useEffect(() => {
@@ -67,6 +79,23 @@ export default function UserProfileModal() {
         const savedPaymentMethod = userProfile.paymentMethod || '';
         setPaymentDetails(savedPaymentDetails);
         setPayoutMethod(savedPaymentMethod);
+        
+        let methodsList: SavedPayoutMethod[] = [];
+        if (savedPaymentDetails.trim().startsWith('[')) {
+          try {
+            methodsList = JSON.parse(savedPaymentDetails);
+          } catch (e) {
+            methodsList = [];
+          }
+        } else if (savedPaymentDetails) {
+          methodsList = [{
+            id: 'legacy-1',
+            methodName: savedPaymentMethod || 'Payment Method',
+            isPreferred: true,
+            details: { details: savedPaymentDetails }
+          }];
+        }
+        setSavedPayoutMethods(methodsList);
         let matchingCountry = countries.find(c => c.name === savedCountry);
         if (!matchingCountry) {
           matchingCountry = countries.find(c => savedPhone.startsWith(c.code));
@@ -100,7 +129,9 @@ export default function UserProfileModal() {
         const mapped = data.map((item: any) => ({
           value: item.name,
           label: item.label,
-          placeholder: item.placeholder
+          placeholder: item.placeholder,
+          fields: item.fields,
+          placeholderType: item.placeholderType
         }));
         
         if (active) {
@@ -143,6 +174,71 @@ export default function UserProfileModal() {
     setStep(2);
   };
 
+  const handleAddPayoutMethod = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payoutMethod) return;
+    
+    const selectedMethod = dynamicMethods.find(m => m.value === payoutMethod);
+    if (!selectedMethod) return;
+    
+    const parsedFields = selectedMethod.fields 
+      ? (typeof selectedMethod.fields === 'string' ? JSON.parse(selectedMethod.fields) : selectedMethod.fields) 
+      : null;
+      
+    const details: { [key: string]: string } = {};
+    
+    if (parsedFields && parsedFields.length > 0) {
+      // Validate dynamic fields
+      for (const field of parsedFields) {
+        const val = newPayoutDetails[field.label] || '';
+        if (!val.trim()) {
+          alert(`Please fill in the ${field.label}`);
+          return;
+        }
+        details[field.label] = val.trim();
+      }
+    } else {
+      // Validate standard single input
+      const val = paymentDetails || '';
+      if (!val.trim()) {
+        alert('Please fill in your payment details.');
+        return;
+      }
+      details['details'] = val.trim();
+    }
+    
+    // Add to list, make preferred if it's the first one
+    const newMethod: SavedPayoutMethod = {
+      id: `payout-method-${Date.now()}`,
+      methodName: payoutMethod,
+      isPreferred: savedPayoutMethods.length === 0,
+      details
+    };
+    
+    setSavedPayoutMethods([...savedPayoutMethods, newMethod]);
+    setShowAddPayoutForm(false);
+    setNewPayoutDetails({});
+    setPaymentDetails('');
+  };
+
+  const handleDeletePayoutMethod = (id: string) => {
+    const updated = savedPayoutMethods.filter(m => m.id !== id);
+    // If we deleted the preferred one, set the first remaining one as preferred
+    if (savedPayoutMethods.find(m => m.id === id)?.isPreferred && updated.length > 0) {
+      updated[0].isPreferred = true;
+    }
+    setSavedPayoutMethods(updated);
+  };
+
+  const handleSetPreferredPayoutMethod = (id: string) => {
+    setSavedPayoutMethods(
+      savedPayoutMethods.map(m => ({
+        ...m,
+        isPreferred: m.id === id
+      }))
+    );
+  };
+
   const handleSubmitProfile = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
@@ -153,28 +249,20 @@ export default function UserProfileModal() {
       newErrors.phone = 'Please enter a valid phone number';
     }
 
-    if (!paymentDetails.trim()) {
-      newErrors.paymentDetails = 'Payout details are required';
-    } else {
-      if (payoutMethod === 'PayPal Email') {
-        if (!/\S+@\S+\.\S+/.test(paymentDetails)) {
-          newErrors.paymentDetails = 'Please enter a valid PayPal Email';
-        }
-      } else if (payoutMethod === 'UPI ID') {
-        if (!paymentDetails.includes('@')) {
-          newErrors.paymentDetails = 'Please enter a valid UPI ID (e.g. name@upi)';
-        }
-      } else if (payoutMethod === 'Paytm Wallet Number') {
-        if (!/^\d{10}$/.test(paymentDetails.replace(/[\s-+]/g, ''))) {
-          newErrors.paymentDetails = 'Please enter a valid 10-digit Paytm Wallet number';
-        }
-      }
+    if (savedPayoutMethods.length === 0) {
+      newErrors.payoutMethods = 'Please add at least one payout method';
+    } else if (!savedPayoutMethods.some(m => m.isPreferred)) {
+      newErrors.payoutMethods = 'Please select a preferred payout method';
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
+
+    const preferredMethod = savedPayoutMethods.find(m => m.isPreferred) || savedPayoutMethods[0];
+    const newPaymentMethod = preferredMethod?.methodName || '';
+    const newPaymentDetails = JSON.stringify(savedPayoutMethods);
 
     // Save profile details
     updateUserProfile({
@@ -183,8 +271,8 @@ export default function UserProfileModal() {
       phone: `${selectedCountry.code} ${phone.trim()}`,
       gender,
       country: selectedCountry.name,
-      paymentMethod: payoutMethod,
-      paymentDetails: paymentDetails.trim()
+      paymentMethod: newPaymentMethod,
+      paymentDetails: newPaymentDetails
     });
 
     // Close and reset
@@ -320,42 +408,180 @@ export default function UserProfileModal() {
               {errors.phone && <span className="error-text-msg">{errors.phone}</span>}
             </div>
 
-            <div className="form-group-field">
-              <label htmlFor="modal-payout-method">Preferred Payout Method *</label>
-              <select 
-                id="modal-payout-method"
-                value={payoutMethod} 
-                onChange={(e) => {
-                  setPayoutMethod(e.target.value);
-                  setPaymentDetails('');
-                }}
-                className="country-select"
-                style={{ width: '100%' }}
-              >
-                {dynamicMethods.map((method) => (
-                  <option key={method.value} value={method.value}>
-                    {method.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <div className="form-group-field" style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '16px', marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <label style={{ margin: 0, fontWeight: 700 }}>Saved Payout Methods *</label>
+                {!showAddPayoutForm && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowAddPayoutForm(true);
+                      if (dynamicMethods.length > 0) {
+                        setPayoutMethod(dynamicMethods[0].value);
+                      }
+                    }}
+                    className="offerwall-btn"
+                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                  >
+                    + Add New
+                  </button>
+                )}
+              </div>
 
-            <div className="form-group-field">
-              <label htmlFor="modal-payment-details">
-                Payout Address / Account Details *
-              </label>
-              <input 
-                id="modal-payment-details"
-                type="text" 
-                placeholder={
-                  dynamicMethods.find(m => m.value === payoutMethod)?.placeholder || 'Enter details'
-                }
-                value={paymentDetails}
-                onChange={(e) => setPaymentDetails(e.target.value)}
-                className={errors.paymentDetails ? 'input-error' : ''}
-              />
-              {errors.paymentDetails && <span className="error-text-msg">{errors.paymentDetails}</span>}
-              <span className="field-hint-msg">Where your task rewards will be sent directly</span>
+              {errors.payoutMethods && <span className="error-text-msg" style={{ display: 'block', marginBottom: '10px' }}>{errors.payoutMethods}</span>}
+
+              {/* Saved Methods List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                {savedPayoutMethods.length === 0 ? (
+                  <div style={{ padding: '16px', border: '1px dashed var(--border-color)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                    No payout methods saved. Please add at least one payout method.
+                  </div>
+                ) : (
+                  savedPayoutMethods.map((m) => (
+                    <div 
+                      key={m.id} 
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '12px 16px', 
+                        background: m.isPreferred ? 'rgba(99,102,241,0.05)' : 'rgba(255,255,255,0.01)', 
+                        border: '1px solid',
+                        borderColor: m.isPreferred ? 'var(--accent-indigo)' : 'var(--border-color)', 
+                        borderRadius: '8px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{m.methodName}</span>
+                          {m.isPreferred && (
+                            <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: 'var(--accent-indigo)', color: 'white', borderRadius: '99px', fontWeight: 'bold' }}>
+                              Preferred
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          {Object.entries(m.details).map(([key, val]) => (
+                            <div key={key}>
+                              <span style={{ textTransform: 'capitalize', color: 'var(--text-muted)' }}>{key.replace('_', ' ')}:</span> {val}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {!m.isPreferred && (
+                          <button 
+                            type="button" 
+                            onClick={() => handleSetPreferredPayoutMethod(m.id)}
+                            style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                          >
+                            Set Preferred
+                          </button>
+                        )}
+                        <button 
+                          type="button" 
+                          onClick={() => handleDeletePayoutMethod(m.id)}
+                          style={{ background: 'transparent', border: '1px solid rgba(255,0,0,0.2)', color: '#ff4d4d', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add New Payout Method Form */}
+              {showAddPayoutForm && (
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '8px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>Add Payout Method</h4>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Payout Method Type</label>
+                    <select 
+                      value={payoutMethod} 
+                      onChange={(e) => {
+                        setPayoutMethod(e.target.value);
+                        setPaymentDetails('');
+                        setNewPayoutDetails({});
+                      }}
+                      className="country-select"
+                      style={{ width: '100%' }}
+                    >
+                      {dynamicMethods.map((method) => (
+                        <option key={method.value} value={method.value}>
+                          {method.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Render Custom Fields or Single Field */}
+                  {(() => {
+                    const selectedMethod = dynamicMethods.find(m => m.value === payoutMethod);
+                    const fields = selectedMethod?.fields 
+                      ? (typeof selectedMethod.fields === 'string' ? JSON.parse(selectedMethod.fields) : selectedMethod.fields)
+                      : null;
+
+                    if (fields && Array.isArray(fields) && fields.length > 0) {
+                      return fields.map((field: any, idx: number) => (
+                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{field.label} *</label>
+                          <input 
+                            type={field.type === 'number' ? 'number' : 'text'}
+                            placeholder={field.placeholder}
+                            value={newPayoutDetails[field.label] || ''}
+                            onChange={(e) => setNewPayoutDetails({
+                              ...newPayoutDetails,
+                              [field.label]: e.target.value
+                            })}
+                            style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                          />
+                        </div>
+                      ));
+                    }
+
+                    // Fallback to single payment details input field
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {selectedMethod?.label || 'Payout details'} *
+                        </label>
+                        <input 
+                          type={selectedMethod?.placeholderType === 'number' ? 'number' : 'text'}
+                          placeholder={selectedMethod?.placeholder || 'Enter details'}
+                          value={paymentDetails}
+                          onChange={(e) => setPaymentDetails(e.target.value)}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    );
+                  })()}
+
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                    <button 
+                      type="button" 
+                      onClick={handleAddPayoutMethod}
+                      style={{ flex: 1, padding: '8px', background: 'var(--accent-indigo)', border: 'none', borderRadius: '6px', color: 'white', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer' }}
+                    >
+                      Save Payout Method
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setShowAddPayoutForm(false);
+                        setNewPayoutDetails({});
+                        setPaymentDetails('');
+                      }}
+                      style={{ flex: 1, padding: '8px', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="form-group-field">

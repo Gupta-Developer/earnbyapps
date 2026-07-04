@@ -10,6 +10,8 @@ interface PaymentMethod {
   placeholder: string;
   targetCountry: string;
   isActive: boolean;
+  fields?: string | any[];
+  placeholderType?: string;
 }
 
 export default function PaymentOptionsPage() {
@@ -21,7 +23,23 @@ export default function PaymentOptionsPage() {
   const [newName, setNewName] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const [newPlaceholder, setNewPlaceholder] = useState('');
+  const [newPlaceholderType, setNewPlaceholderType] = useState('text');
+  const [customFields, setCustomFields] = useState<{ label: string; placeholder: string; type: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const addCustomField = () => {
+    setCustomFields([...customFields, { label: '', placeholder: '', type: 'text' }]);
+  };
+
+  const removeCustomField = (index: number) => {
+    setCustomFields(customFields.filter((_, i) => i !== index));
+  };
+
+  const updateCustomField = (index: number, key: 'label' | 'placeholder' | 'type', value: string) => {
+    const updated = [...customFields];
+    updated[index][key] = value;
+    setCustomFields(updated);
+  };
 
   // Search dropdown states
   const [countrySearch, setCountrySearch] = useState('Global');
@@ -128,15 +146,19 @@ export default function PaymentOptionsPage() {
           label: newLabel.trim(),
           placeholder: newPlaceholder.trim(),
           targetCountry: newCountry,
-          isActive: true
+          isActive: true,
+          fields: customFields.length > 0 ? customFields : null,
+          placeholderType: newPlaceholderType
         })
       });
       if (res.ok) {
         setNewName('');
         setNewLabel('');
         setNewPlaceholder('');
+        setNewPlaceholderType('text');
         setNewCountry('Global');
         setCountrySearch('Global');
+        setCustomFields([]);
         fetchMethods();
       } else {
         const data = await res.json();
@@ -235,7 +257,7 @@ export default function PaymentOptionsPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Method Key / ID</label>
+              <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Method Name</label>
               <input 
                 type="text" 
                 placeholder="e.g. UPI ID, PIX, PayPal Email"
@@ -245,15 +267,29 @@ export default function PaymentOptionsPage() {
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Display Label</label>
-              <input 
-                type="text" 
-                placeholder="e.g. 🇮🇳 UPI ID (GPay / BHIM)"
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                style={{ padding: '8px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '0.85rem' }}
-              />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Display Label</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. 🇮🇳 UPI ID (GPay / BHIM)"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  style={{ padding: '8px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '0.85rem', width: '100%' }}
+                />
+              </div>
+              
+              <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Type</label>
+                <select
+                  value={newPlaceholderType}
+                  onChange={(e) => setNewPlaceholderType(e.target.value)}
+                  style={{ padding: '8px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '0.85rem', width: '100%', height: '36px' }}
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                </select>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -265,6 +301,77 @@ export default function PaymentOptionsPage() {
                 onChange={(e) => setNewPlaceholder(e.target.value)}
                 style={{ padding: '8px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '0.85rem' }}
               />
+            </div>
+
+            {/* Custom Fields Manager */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px dashed var(--border-color)', paddingTop: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>Custom Fields (Optional)</span>
+                <button 
+                  type="button" 
+                  onClick={addCustomField}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    color: 'var(--accent-indigo)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  + Add Field
+                </button>
+              </div>
+              
+              {customFields.map((field, idx) => (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                  <button 
+                    type="button"
+                    onClick={() => removeCustomField(idx)}
+                    style={{ position: 'absolute', top: '6px', right: '6px', background: 'transparent', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '0.85rem' }}
+                  >
+                    × Remove
+                  </button>
+                  
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Display Label</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Account Number"
+                        value={field.label}
+                        onChange={(e) => updateCustomField(idx, 'label', e.target.value)}
+                        style={{ padding: '6px 10px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px', fontSize: '0.78rem', width: '100%' }}
+                      />
+                    </div>
+                    
+                    <div style={{ width: '90px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Type</label>
+                      <select
+                        value={field.type}
+                        onChange={(e) => updateCustomField(idx, 'type', e.target.value)}
+                        style={{ padding: '6px 10px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px', fontSize: '0.78rem', width: '100%', height: '31px' }}
+                      >
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>User Input Placeholder</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 1234567890"
+                      value={field.placeholder}
+                      onChange={(e) => updateCustomField(idx, 'placeholder', e.target.value)}
+                      style={{ padding: '6px 10px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px', fontSize: '0.78rem' }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
             <button 
@@ -285,19 +392,6 @@ export default function PaymentOptionsPage() {
               {submitting ? 'ADDING...' : 'ADD METHOD'}
             </button>
           </form>
-
-          {/* Min Withdrawal Settings */}
-          <div className="glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}>
-              Minimum Withdrawal Threshold (₹ INR)
-            </label>
-            <input 
-              type="number"
-              value={minWithdrawal}
-              onChange={(e) => handleMinWithdrawalChange(parseInt(e.target.value) || 0)}
-              style={{ padding: '8px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', width: '100%' }}
-            />
-          </div>
         </div>
 
         {/* Right column: Current gateways list */}
@@ -317,13 +411,39 @@ export default function PaymentOptionsPage() {
                 <div key={method.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Method Name:</span>
                       <strong style={{ color: 'var(--text-primary)' }}>{method.name}</strong>
                       <span style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(255,255,255,0.06)', borderRadius: '12px', color: 'var(--text-muted)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         {flag} {method.targetCountry}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{method.label}</span>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Placeholder: <em>{method.placeholder}</em></span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Display Label:</span> {method.label} <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({method.placeholderType || 'text'})</span>
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      User Input Placeholder: <em>{method.placeholder}</em>
+                    </span>
+                    
+                    {method.fields && (() => {
+                      try {
+                        const parsed = typeof method.fields === 'string' ? JSON.parse(method.fields) : method.fields;
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                          return (
+                            <div style={{ marginTop: '8px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                              <strong>Custom Fields:</strong>
+                              <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px', listStyleType: 'disc' }}>
+                                {parsed.map((f: any, idx: number) => (
+                                  <li key={idx} style={{ color: 'var(--text-secondary)' }}>
+                                    {f.label} <span style={{ color: 'var(--text-muted)' }}>({f.type})</span> — <span style={{ opacity: 0.7 }}>Placeholder: {f.placeholder}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        }
+                      } catch (e) {}
+                      return null;
+                    })()}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

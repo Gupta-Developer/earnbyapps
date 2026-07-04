@@ -71,15 +71,52 @@ export default function PartnerAccountPage() {
           {/* Payout Details */}
           <div className="details-section">
             <h3>💳 Payout Information</h3>
-            <div className="details-list">
-              <div className="detail-item">
-                <span className="detail-label">Payment Method</span>
-                <span className="detail-value highlight-payout">{userProfile?.paymentMethod || 'Not Configured'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Payment Details</span>
-                <span className="detail-value text-monospace">{userProfile?.paymentDetails || 'Not Configured'}</span>
-              </div>
+            <div className="details-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {userProfile?.paymentDetails && (userProfile.paymentDetails.trim().startsWith('[') || userProfile.paymentDetails.trim().startsWith('{')) ? (
+                (() => {
+                  try {
+                    const parsed = JSON.parse(userProfile.paymentDetails);
+                    if (Array.isArray(parsed)) {
+                      return parsed.map((m: any, idx: number) => (
+                        <div key={m.id || idx} style={{ borderBottom: idx < parsed.length - 1 ? '1px dashed var(--border-color)' : 'none', paddingBottom: '12px', marginBottom: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{m.methodName}</span>
+                            {m.isPreferred && (
+                              <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: '#10b981', color: 'white', borderRadius: '4px', fontWeight: 'bold' }}>
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.85rem', paddingLeft: '8px' }}>
+                            {Object.entries(m.details || {}).map(([key, val]: [string, any]) => (
+                              <div key={key} style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                <span style={{ textTransform: 'capitalize', color: 'var(--text-muted)' }}>{key.replace('_', ' ')}:</span> {val}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ));
+                    }
+                  } catch (e) {}
+                  return (
+                    <div className="detail-item">
+                      <span className="detail-label">Details</span>
+                      <span className="detail-value text-monospace">{userProfile?.paymentDetails}</span>
+                    </div>
+                  );
+                })()
+              ) : (
+                <>
+                  <div className="detail-item">
+                    <span className="detail-label">Payment Method</span>
+                    <span className="detail-value highlight-payout">{userProfile?.paymentMethod || 'Not Configured'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Payment Details</span>
+                    <span className="detail-value text-monospace">{userProfile?.paymentDetails || 'Not Configured'}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

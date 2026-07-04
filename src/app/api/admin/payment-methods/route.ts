@@ -3,8 +3,26 @@ import { sql } from '../../../../lib/db';
 
 export async function GET() {
   try {
+    // Ensure table and column exist
+    await sql`
+      CREATE TABLE IF NOT EXISTS payment_methods (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        label VARCHAR(255) NOT NULL,
+        placeholder VARCHAR(255) NOT NULL,
+        target_country VARCHAR(100) DEFAULT 'Global',
+        is_active BOOLEAN DEFAULT true
+      );
+    `;
+    await sql`
+      ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS fields TEXT;
+    `;
+    await sql`
+      ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS placeholder_type VARCHAR(50) DEFAULT 'text';
+    `;
+
     const methods = await sql`
-      SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive"
+      SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive", fields, placeholder_type as "placeholderType"
       FROM payment_methods
       ORDER BY id ASC
     `;
@@ -18,18 +36,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, label, placeholder, targetCountry, isActive } = body;
+    const { name, label, placeholder, targetCountry, isActive, fields, placeholderType } = body;
 
     if (!name || !label || !placeholder || !targetCountry) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const active = isActive !== undefined ? isActive : true;
+    const fieldsStr = fields ? (typeof fields === 'string' ? fields : JSON.stringify(fields)) : null;
+    const pType = placeholderType || 'text';
 
     const result = await sql`
-      INSERT INTO payment_methods (name, label, placeholder, target_country, is_active)
-      VALUES (${name}, ${label}, ${placeholder}, ${targetCountry}, ${active})
-      RETURNING id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive"
+      INSERT INTO payment_methods (name, label, placeholder, target_country, is_active, fields, placeholder_type)
+      VALUES (${name}, ${label}, ${placeholder}, ${targetCountry}, ${active}, ${fieldsStr}, ${pType})
+      RETURNING id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive", fields, placeholder_type as "placeholderType"
     `;
 
     return NextResponse.json(result[0]);
@@ -42,7 +62,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, label, placeholder, targetCountry, isActive } = body;
+    const { id, name, label, placeholder, targetCountry, isActive, fields, placeholderType } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Method ID is required' }, { status: 400 });
@@ -58,6 +78,8 @@ export async function PUT(request: Request) {
     const updatedPlaceholder = placeholder !== undefined ? placeholder : existing[0].placeholder;
     const updatedTargetCountry = targetCountry !== undefined ? targetCountry : existing[0].target_country;
     const updatedIsActive = isActive !== undefined ? isActive : existing[0].is_active;
+    const updatedFields = fields !== undefined ? (typeof fields === 'string' ? fields : JSON.stringify(fields)) : existing[0].fields;
+    const updatedPlaceholderType = placeholderType !== undefined ? placeholderType : (existing[0].placeholder_type || 'text');
 
     const result = await sql`
       UPDATE payment_methods
@@ -65,9 +87,11 @@ export async function PUT(request: Request) {
           label = ${updatedLabel},
           placeholder = ${updatedPlaceholder},
           target_country = ${updatedTargetCountry},
-          is_active = ${updatedIsActive}
+          is_active = ${updatedIsActive},
+          fields = ${updatedFields},
+          placeholder_type = ${updatedPlaceholderType}
       WHERE id = ${parseInt(id)}
-      RETURNING id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive"
+      RETURNING id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive", fields, placeholder_type as "placeholderType"
     `;
 
     return NextResponse.json(result[0]);

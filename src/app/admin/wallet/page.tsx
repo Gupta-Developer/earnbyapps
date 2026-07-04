@@ -68,7 +68,37 @@ export default function WalletPage() {
                   <span style={{ fontSize: '0.78rem', display: 'block', color: 'var(--text-muted)' }}>{req.email}</span>
                 </td>
                 <td>
-                  <code style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)' }}>{req.upi}</code>
+                  {(() => {
+                    if (req.upi && (req.upi.trim().startsWith('{') || req.upi.trim().startsWith('['))) {
+                      try {
+                        const parsed = JSON.parse(req.upi);
+                        if (Array.isArray(parsed)) {
+                          const preferred = parsed.find(p => p.isPreferred) || parsed[0];
+                          if (!preferred) return <span style={{ color: 'var(--text-muted)' }}>No details</span>;
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <strong style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>{preferred.methodName}</strong>
+                              {Object.entries(preferred.details || {}).map(([key, val]: [string, any]) => (
+                                <div key={key} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                  <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{key.replace('_', ' ')}:</span> {val}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {Object.entries(parsed).map(([key, val]: [string, any]) => (
+                              <div key={key} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{key.replace('_', ' ')}:</span> {val}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      } catch (e) {}
+                    }
+                    return <code style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)' }}>{req.upi}</code>;
+                  })()}
                 </td>
                 <td style={{ fontSize: '1rem', fontWeight: 'bold' }}>
                   ₹{req.amount}

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
 
     if (!country) {
       const methods = await sql`
-        SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive"
+        SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive", fields, placeholder_type as "placeholderType"
         FROM payment_methods
         WHERE is_active = true
         ORDER BY id ASC
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
     // Query active methods matching target country
     const countryMethods = await sql`
-      SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive"
+      SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive", fields, placeholder_type as "placeholderType"
       FROM payment_methods
       WHERE is_active = true AND LOWER(target_country) = ${country.toLowerCase()}
       ORDER BY id ASC
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
     // Fallback to Global methods if no country-specific options exist
     const globalMethods = await sql`
-      SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive"
+      SELECT id, name, label, placeholder, target_country as "targetCountry", is_active as "isActive", fields, placeholder_type as "placeholderType"
       FROM payment_methods
       WHERE is_active = true AND LOWER(target_country) = 'global'
       ORDER BY id ASC
