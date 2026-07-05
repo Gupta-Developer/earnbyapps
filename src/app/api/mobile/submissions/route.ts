@@ -38,22 +38,42 @@ export async function GET(request: Request) {
       ORDER BY created_at DESC
     `;
     
-    const formatted = rows.map(r => ({
-      id: r.id,
-      userName: r.user_name,
-      userEmail: r.user_email,
-      appName: r.app_name,
-      appId: r.app_id,
-      reward: Number(r.reward),
-      proof: r.proof,
-      proofType: r.proof_type as 'image' | 'video' | 'text',
-      proofUrl: r.proof_url || undefined,
-      status: r.status as 'Pending' | 'Approved' | 'Rejected',
-      time: new Date(r.created_at).toLocaleDateString() || 'Just now',
-      verifierEmail: r.verifier_email,
-      verificationType: r.verification_type as 'admin' | 'creator',
-      referralSlotId: r.referral_slot_id || undefined
-    }));
+    const formatted = rows.map(r => {
+      let timeStr = 'Just now';
+      if (r.created_at) {
+        try {
+          const d = new Date(r.created_at);
+          if (!isNaN(d.getTime())) {
+            timeStr = d.toLocaleString('en-US', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            });
+          }
+        } catch (e) {
+          // fallback
+        }
+      }
+      return {
+        id: r.id,
+        userName: r.user_name,
+        userEmail: r.user_email,
+        appName: r.app_name,
+        appId: r.app_id,
+        reward: Number(r.reward),
+        proof: r.proof,
+        proofType: r.proof_type as 'image' | 'video' | 'text',
+        proofUrl: r.proof_url || undefined,
+        status: r.status as 'Pending' | 'Approved' | 'Rejected',
+        time: timeStr,
+        verifierEmail: r.verifier_email,
+        verificationType: r.verification_type as 'admin' | 'creator',
+        referralSlotId: r.referral_slot_id || undefined
+      };
+    });
 
     return NextResponse.json(formatted);
   } catch (error: any) {
