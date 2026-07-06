@@ -125,6 +125,8 @@ export async function POST(request: Request) {
 
     const submissionId = `sub-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
+    const finalProofType = proofType && proofType !== 'text' ? proofType : (proofUrl ? 'image' : 'text');
+
     await sql`
       INSERT INTO submissions (
         id, user_name, user_email, app_name, app_id, reward,
@@ -132,7 +134,7 @@ export async function POST(request: Request) {
         verification_type, referral_slot_id
       ) VALUES (
         ${submissionId}, ${userName}, ${authUser.email}, ${appName}, ${appId}, ${reward},
-        ${proof}, ${proofType || 'text'}, ${proofUrl || null}, 'Pending', ${verifierEmail},
+        ${proof}, ${finalProofType}, ${proofUrl || null}, 'Pending', ${verifierEmail},
         ${verificationType}, ${referralSlotId || null}
       )
     `;

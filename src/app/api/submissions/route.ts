@@ -91,6 +91,8 @@ export async function POST(req: Request) {
       referralSlotId
     } = body;
 
+    const finalProofType = proofType && proofType !== 'text' ? proofType : (proofUrl ? 'image' : 'text');
+
     await sql`
       INSERT INTO submissions (
         id, user_name, user_email, app_name, app_id, reward,
@@ -98,7 +100,7 @@ export async function POST(req: Request) {
         verification_type, referral_slot_id
       ) VALUES (
         ${id}, ${userName}, ${userEmail}, ${appName}, ${appId}, ${reward},
-        ${proof}, ${proofType}, ${proofUrl || null}, ${status || 'Pending'}, ${verifierEmail},
+        ${proof}, ${finalProofType}, ${proofUrl || null}, ${status || 'Pending'}, ${verifierEmail},
         ${verificationType}, ${referralSlotId || null}
       )
     `;
