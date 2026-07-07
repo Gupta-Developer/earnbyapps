@@ -23,10 +23,12 @@ export default function SubmissionsPage() {
       return;
     }
 
+    const email = selectedSub.userEmail;
+
     async function fetchUserPayment() {
       try {
         setLoadingPayment(true);
-        const res = await fetch(`/api/users?email=${encodeURIComponent(selectedSub.userEmail)}`);
+        const res = await fetch(`/api/users?email=${encodeURIComponent(email)}`);
         if (res.ok) {
           const data = await res.json();
           setPaymentDetails({
