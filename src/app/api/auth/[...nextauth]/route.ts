@@ -35,6 +35,9 @@ export const authOptions = {
         }
 
         const user = users[0];
+        if (user.is_blocked) {
+          throw new Error("Your account has been blocked. Please contact support.");
+        }
         if (!user.password) {
           throw new Error("This account is configured with Google Sign In. Please use Google Sign In.");
         }
@@ -62,18 +65,23 @@ export const authOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }: { user: any; account: any; profile?: any }) {
-      if (account?.provider === "google" && user && user.email) {
+      if (user && user.email) {
         try {
           // Check if the user exists in our neon database users table
           const existingUsers = await sql`SELECT * FROM users WHERE email = ${user.email}`;
-          if (existingUsers.length === 0) {
+          if (existingUsers.length > 0 && existingUsers[0].is_blocked) {
+            // Reject sign in for blocked users
+            return false;
+          }
+          if (account?.provider === "google" && existingUsers.length === 0) {
             // User doesn't exist, insert them!
             const fullName = user.name || 'Google User';
             const role = user.email === 'admin@earnbyapps.com' || user.email === 'mayank.gupta.dev.1@gmail.com' || user.email === 'aashish.gupta.mails@gmail.com' ? 'admin' : 'user';
             
+            const newId = crypto.randomUUID();
             await sql`
-              INSERT INTO users (email, full_name, role, balance)
-              VALUES (${user.email}, ${fullName}, ${role}, 100.00)
+              INSERT INTO users (id, email, full_name, role, balance)
+              VALUES (${newId}, ${user.email}, ${fullName}, ${role}, 0.00)
             `;
             console.log(`Successfully registered new user via Google: ${user.email}`);
           }

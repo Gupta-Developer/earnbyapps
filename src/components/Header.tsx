@@ -30,13 +30,6 @@ export default function Header() {
         </Link>
         
         <div className="header-actions">
-          {/* Offerwall navigation button (Mockup style outline button) */}
-          <Link 
-            href="/offerwall" 
-            className={`offerwall-btn ${pathname === '/offerwall' ? 'active' : ''}`}
-          >
-            Offerwall
-          </Link>
 
           {/* Theme switcher */}
           <button 

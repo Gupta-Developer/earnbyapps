@@ -8,7 +8,7 @@ function LoginForm() {
   const { status, data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/offerwall';
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   // Toggle state between 'signin' and 'signup'
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
@@ -33,7 +33,7 @@ function LoginForm() {
       } else if (userRole === 'partner') {
         router.push('/partner/overview');
       } else {
-        router.push('/offerwall');
+        router.push('/');
       }
     }
   }, [status, session, router]);

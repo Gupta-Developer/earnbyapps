@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const users = await sql`
       SELECT id, email, full_name as "fullName", phone, gender, country, role, balance, payment_method as "paymentMethod", payment_details as "paymentDetails", created_at
       FROM users
-      WHERE id = ${parseInt(authUser.id)}
+      WHERE email = ${authUser.email}
     `;
 
     if (users.length === 0) {
@@ -72,7 +72,7 @@ export async function PUT(request: Request) {
     const { fullName, phone, gender, country, paymentMethod, paymentDetails } = body;
 
     // Retrieve original record
-    const existing = await sql`SELECT * FROM users WHERE id = ${parseInt(authUser.id)}`;
+    const existing = await sql`SELECT * FROM users WHERE email = ${authUser.email}`;
     if (existing.length === 0) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
@@ -94,7 +94,7 @@ export async function PUT(request: Request) {
         country = ${newCountry},
         payment_method = ${newPaymentMethod}, 
         payment_details = ${newPaymentDetails}
-      WHERE id = ${parseInt(authUser.id)}
+      WHERE email = ${authUser.email}
     `;
 
     return NextResponse.json({

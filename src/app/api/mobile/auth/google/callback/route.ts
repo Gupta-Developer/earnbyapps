@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../../auth/[...nextauth]/route';
 import { sql } from '../../../../../../lib/db';
 import { signToken } from '../../../../../../lib/jwt';
+import crypto from 'crypto';
 
 export async function GET(request: Request) {
   try {
@@ -26,9 +27,10 @@ export async function GET(request: Request) {
       // Register user
       const role = email === 'admin@earnbyapps.com' || email === 'mayank.gupta.dev.1@gmail.com' || email === 'aashish.gupta.mails@gmail.com' ? 'admin' : 'user';
       
+      const newId = crypto.randomUUID();
       await sql`
-        INSERT INTO users (email, full_name, role, balance)
-        VALUES (${email}, ${name}, ${role}, 100.00)
+        INSERT INTO users (id, email, full_name, role, balance)
+        VALUES (${newId}, ${email}, ${name}, ${role}, 100.00)
       `;
       
       users = await sql`SELECT * FROM users WHERE email = ${email}`;

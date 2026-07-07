@@ -97,8 +97,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing appId or proof.' }, { status: 400 });
     }
 
-    // Retrieve user's full name
-    const users = await sql`SELECT full_name FROM users WHERE id = ${parseInt(authUser.id)}`;
+    // Retrieve user's full name by email
+    const users = await sql`SELECT full_name FROM users WHERE email = ${authUser.email}`;
     if (users.length === 0) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }

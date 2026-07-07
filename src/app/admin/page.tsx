@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 
 export default function AdminOverview() {
-  const { apps, partnershipLeads } = useApp();
+  const { partnershipLeads, submissions } = useApp();
   
   const [payoutRequests, setPayoutRequests] = useState([
     { id: 'payout-1', name: 'Test User', email: 'user@example.com', amount: 500, upi: 'user@bank', status: 'Pending', date: '15 Jun 2026' },
@@ -13,26 +13,76 @@ export default function AdminOverview() {
     { id: 'payout-3', name: 'Rohan Mehta', email: 'rohan@ybl', amount: 1200, upi: 'rohan@okicici', status: 'Processed', date: '12 Jun 2026' }
   ]);
 
-  const [deactivatedIds, setDeactivatedIds] = useState<string[]>([]);
+  const [realUserCount, setRealUserCount] = useState<number | null>(null);
+  const [realCampaignCount, setRealCampaignCount] = useState<number | null>(null);
 
   useEffect(() => {
     const storedPayouts = localStorage.getItem('eb_admin_payouts');
     if (storedPayouts) {
       setPayoutRequests(JSON.parse(storedPayouts));
     }
-    const storedDeactivated = localStorage.getItem('eb_admin_deactivated');
-    if (storedDeactivated) {
-      setDeactivatedIds(JSON.parse(storedDeactivated));
-    }
   }, []);
 
-  const activeAppsCount = useMemo(() => {
-    return apps.filter(app => !deactivatedIds.includes(app.id)).length;
-  }, [apps, deactivatedIds]);
+  // Fetch real count of registered users from database
+  useEffect(() => {
+    async function loadUserCount() {
+      try {
+        const res = await fetch('/api/users?page=1&limit=1');
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.totalCount === 'number') {
+            setRealUserCount(data.totalCount);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load real user count:", e);
+      }
+    }
+    loadUserCount();
+  }, []);
+
+  // Fetch real count of active campaigns directly from the campaigns database API
+  useEffect(() => {
+    async function loadCampaignCount() {
+      try {
+        const res = await fetch('/api/campaigns');
+        if (res.ok) {
+          const dbApps = await res.json();
+          if (Array.isArray(dbApps)) {
+            // Count active offers
+            const activeCount = dbApps.filter(app => app.isActive !== false).length;
+            setRealCampaignCount(activeCount);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load real campaigns count:", e);
+      }
+    }
+    loadCampaignCount();
+  }, []);
 
   const pendingPayoutsCount = useMemo(() => {
     return payoutRequests.filter(p => p.status === 'Pending').length;
   }, [payoutRequests]);
+
+  // Generate real recent activities from real submissions list
+  const recentActivities = useMemo(() => {
+    if (!submissions || submissions.length === 0) return [];
+    return submissions.slice(0, 5).map(sub => {
+      let emoji = '⚡';
+      if (sub.status === 'Approved') emoji = '✅';
+      else if (sub.status === 'Rejected') emoji = '❌';
+      else if (sub.status === 'Pending') emoji = '⏳';
+
+      return {
+        id: sub.id,
+        emoji,
+        text: `User ${sub.userName} (${sub.userEmail}) submitted completion for ${sub.appName} (Reward: ₹${sub.reward.toFixed(2)})`,
+        status: sub.status,
+        time: sub.time
+      };
+    });
+  }, [submissions]);
 
   return (
     <div className="admin-overview-grid">
@@ -41,12 +91,12 @@ export default function AdminOverview() {
       <div className="analytics-mock-grid" style={{ marginTop: 0 }}>
         <div className="analytics-mini-card">
           <span className="mini-lbl">Active Users</span>
-          <strong className="mini-val">1,420</strong>
-          <span className="mini-change green-txt">▲ 12.3% this week</span>
+          <strong className="mini-val">{realUserCount !== null ? realUserCount : 'Loading...'}</strong>
+          <span className="mini-change green-txt">Registered in database</span>
         </div>
         <div className="analytics-mini-card">
           <span className="mini-lbl">Live Directory Apps</span>
-          <strong className="mini-val">{activeAppsCount}</strong>
+          <strong className="mini-val">{realCampaignCount !== null ? realCampaignCount : 'Loading...'}</strong>
           <span className="mini-change">Running offers</span>
         </div>
         <div className="analytics-mini-card">
@@ -54,11 +104,7 @@ export default function AdminOverview() {
           <strong className="mini-val">{partnershipLeads.filter(l => l.status === 'New').length}</strong>
           <span className="mini-change">{partnershipLeads.filter(l => l.status === 'New').length > 0 ? '⚠️ New leads review' : '✓ Clean queue'}</span>
         </div>
-        <div className="analytics-mini-card">
-          <span className="mini-lbl">UPI Withdrawal Queue</span>
-          <strong className="mini-val">{pendingPayoutsCount}</strong>
-          <span className="mini-change">Awaiting transfer</span>
-        </div>
+
       </div>
 
       {/* Overview Details Section */}
@@ -68,34 +114,29 @@ export default function AdminOverview() {
         <div className="admin-content-card" style={{ padding: '24px' }}>
           <h3 className="card-heading" style={{ fontSize: '1.1rem', marginBottom: '16px' }}>Recent Platform Activity</h3>
           <div className="activities-timeline" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="activity-item" style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <span style={{ fontSize: '1.2rem' }}>👤</span>
-              <div>
-                <p style={{ fontSize: '0.88rem', margin: 0 }}>Partner <strong>Alice Partner</strong> submitted new campaign <strong>'TestAppPro'</strong>.</p>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>10 mins ago</span>
-              </div>
-            </div>
-            <div className="activity-item" style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <span style={{ fontSize: '1.2rem' }}>💸</span>
-              <div>
-                <p style={{ fontSize: '0.88rem', margin: 0 }}>User <strong>Test User</strong> requested a UPI payout of <strong>₹500.00</strong>.</p>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>45 mins ago</span>
-              </div>
-            </div>
-            <div className="activity-item" style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <span style={{ fontSize: '1.2rem' }}>⚡</span>
-              <div>
-                <p style={{ fontSize: '0.88rem', margin: 0 }}>System auto-tracked completed task action: <strong>Swagbucks - Complete Profile</strong>.</p>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>2 hours ago</span>
-              </div>
-            </div>
-            <div className="activity-item" style={{ display: 'flex', gap: '12px' }}>
-              <span style={{ fontSize: '1.2rem' }}>🔑</span>
-              <div>
-                <p style={{ fontSize: '0.88rem', margin: 0 }}>Admin approved Prime Opinion campaign to live offerwall directory.</p>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>5 hours ago</span>
-              </div>
-            </div>
+            {recentActivities.length > 0 ? (
+              recentActivities.map((act) => (
+                <div key={act.id} className="activity-item" style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>{act.emoji}</span>
+                  <div>
+                    <p style={{ fontSize: '0.88rem', margin: 0, color: 'var(--text-primary)' }}>{act.text}</p>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{act.time}</span>
+                      <span style={{ 
+                        fontSize: '0.68rem', 
+                        padding: '1px 5px', 
+                        borderRadius: '3px', 
+                        fontWeight: 'bold',
+                        background: act.status === 'Pending' ? 'rgba(245,158,11,0.12)' : act.status === 'Approved' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                        color: act.status === 'Pending' ? '#f59e0b' : act.status === 'Approved' ? 'var(--accent-emerald)' : '#ef4444'
+                      }}>{act.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p style={{ fontStyle: 'italic', fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>No recent submission activity found.</p>
+            )}
           </div>
         </div>
 
@@ -109,9 +150,7 @@ export default function AdminOverview() {
             <Link href="/admin/referral-pools" className="glow-btn-cyan" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textDecoration: 'none', textAlign: 'left', display: 'block', background: 'linear-gradient(135deg, var(--accent-indigo), #0ea5e9)' }}>
               🔗 Manage Referral Pools & Rotate Links
             </Link>
-            <Link href="/admin/wallet" className="glow-btn-purple" style={{ padding: '12px 16px', fontSize: '0.85rem', width: '100%', textDecoration: 'none', textAlign: 'left', display: 'block' }}>
-              💸 Process User Withdrawals
-            </Link>
+
             <Link href="/admin/new-campaign" className="menu-item-btn" style={{ padding: '12px 16px', border: '1px solid var(--border-color)', color: 'var(--text-primary)', textDecoration: 'none', textAlign: 'left', width: '100%', display: 'flex' }}>
               ➕ Create New Direct Offer
             </Link>
@@ -178,25 +217,17 @@ export default function AdminOverview() {
           margin-bottom: 6px;
         }
         .menu-item-btn {
-          background: transparent;
-          border: none;
-          color: var(--text-secondary);
-          padding: 10px 16px;
-          border-radius: 8px;
-          font-family: var(--font-primary);
-          font-size: 0.88rem;
-          font-weight: 500;
-          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255, 255, 255, 0.01);
+          padding: 12px;
+          border-radius: 6px;
           transition: all 0.2s;
         }
         .menu-item-btn:hover {
-          background: var(--bg-card-hover);
-          color: var(--text-primary);
-        }
-        @media (max-width: 768px) {
-          .overview-row-container {
-            grid-template-columns: 1fr !important;
-          }
+          background: rgba(255, 255, 255, 0.04);
+          border-color: var(--border-hover) !important;
         }
       `}</style>
     </div>

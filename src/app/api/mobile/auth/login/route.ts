@@ -26,6 +26,9 @@ export async function POST(request: Request) {
     }
 
     const user = users[0];
+    if (user.is_blocked) {
+      return NextResponse.json({ error: 'Your account has been blocked. Please contact support.' }, { status: 403 });
+    }
     if (!user.password) {
       return NextResponse.json({ error: 'This account is configured with Google Sign In on web.' }, { status: 400 });
     }

@@ -301,6 +301,9 @@ export default function PartnershipLeadsPage() {
         .inspector-panel {
           position: sticky;
           top: 24px;
+          max-height: calc(100vh - 160px);
+          overflow-y: auto;
+          padding-right: 4px;
         }
 
         .inspector-content-card {

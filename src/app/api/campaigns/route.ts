@@ -1,9 +1,42 @@
 import { NextResponse } from 'next/server';
 import { sql } from '../../../lib/db';
 
-export async function GET() {
+function mapCampaign(c: any) {
+  return {
+    id: c.id,
+    name: c.name,
+    category: c.category,
+    platforms: c.platforms ? c.platforms.split(',') : [],
+    earningRate: c.earning_rate,
+    averageEarningsPerDay: Number(c.reward),
+    difficulty: 'Easy',
+    rating: 5.0,
+    reviewsCount: 1,
+    description: c.description || '',
+    longDescription: c.long_description || '',
+    tags: c.tags ? c.tags.split(',') : [],
+    actionText: `Launch ${c.name}`,
+    externalUrl: c.external_url || '',
+    targetCountry: c.target_country || 'Global',
+    currency: c.currency || 'USD',
+    currencySymbol: c.currency_symbol || '$',
+    targetCompletions: Number(c.target_completions || 1000),
+    videoUrl: c.video_url || undefined,
+    reward: Number(c.reward),
+    assignedEmail: c.assigned_email || undefined,
+    isActive: c.is_active !== false
+  };
+}
+
+export async function GET(request: Request) {
   try {
-    // Ensure column exists first (Self-migrating)
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page');
+    const limit = parseInt(searchParams.get('limit') || '5');
+    const country = searchParams.get('country') || 'All';
+    const search = searchParams.get('search') || '';
+
+    // Ensure columns exist (Self-migrating)
     try {
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS assigned_email VARCHAR(255)`;
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
@@ -11,33 +44,51 @@ export async function GET() {
       console.warn("Migration warning for assigned_email/is_active column:", migErr);
     }
 
-    const campaigns = await sql`SELECT * FROM campaigns ORDER BY created_at DESC`;
-    // Map db columns to frontend interface structure
-    const formattedCampaigns = campaigns.map(c => ({
-      id: c.id,
-      name: c.name,
-      category: c.category,
-      platforms: c.platforms ? c.platforms.split(',') : [],
-      earningRate: c.earning_rate,
-      averageEarningsPerDay: Number(c.reward),
-      difficulty: 'Easy', // default
-      rating: 5.0,
-      reviewsCount: 1,
-      description: c.description || '',
-      longDescription: c.long_description || '',
-      tags: c.tags ? c.tags.split(',') : [],
-      actionText: `Launch ${c.name}`,
-      externalUrl: c.external_url || '',
-      targetCountry: c.target_country || 'Global',
-      currency: c.currency || 'USD',
-      currencySymbol: c.currency_symbol || '$',
-      targetCompletions: Number(c.target_completions || 1000),
-      videoUrl: c.video_url || undefined,
-      reward: Number(c.reward),
-      assignedEmail: c.assigned_email || undefined,
-      isActive: c.is_active !== false
-    }));
-    return NextResponse.json(formattedCampaigns);
+    if (!page) {
+      const campaigns = await sql`SELECT * FROM campaigns ORDER BY created_at DESC`;
+      const formattedCampaigns = campaigns.map(c => mapCampaign(c));
+      return NextResponse.json(formattedCampaigns);
+    }
+
+    // Paginated server-side query
+    const pageNum = parseInt(page);
+    const offset = (pageNum - 1) * limit;
+    const searchPattern = `%${search.toLowerCase()}%`;
+
+    let campaigns;
+    let countRes;
+
+    if (country === 'All') {
+      campaigns = await sql`
+        SELECT * FROM campaigns 
+        WHERE (LOWER(name) LIKE ${searchPattern} OR LOWER(category) LIKE ${searchPattern})
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countRes = await sql`
+        SELECT COUNT(*) as count FROM campaigns 
+        WHERE (LOWER(name) LIKE ${searchPattern} OR LOWER(category) LIKE ${searchPattern})
+      `;
+    } else {
+      campaigns = await sql`
+        SELECT * FROM campaigns 
+        WHERE target_country = ${country} AND (LOWER(name) LIKE ${searchPattern} OR LOWER(category) LIKE ${searchPattern})
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countRes = await sql`
+        SELECT COUNT(*) as count FROM campaigns 
+        WHERE target_country = ${country} AND (LOWER(name) LIKE ${searchPattern} OR LOWER(category) LIKE ${searchPattern})
+      `;
+    }
+
+    const totalCount = parseInt(countRes[0]?.count || '0');
+    const formattedCampaigns = campaigns.map(c => mapCampaign(c));
+
+    return NextResponse.json({
+      campaigns: formattedCampaigns,
+      totalCount
+    });
   } catch (error: any) {
     console.error('Error fetching campaigns from database:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -104,9 +155,9 @@ export async function POST(request: Request) {
         is_active = EXCLUDED.is_active
     `;
 
-    return NextResponse.json({ success: true, campaignId: finalId });
+    return NextResponse.json({ success: true, id: finalId });
   } catch (error: any) {
-    console.error('Error saving campaign to database:', error);
+    console.error('Error creating/updating campaign in database:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -120,11 +171,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Campaign ID is required' }, { status: 400 });
     }
 
-    await sql`
-      DELETE FROM campaigns
-      WHERE id = ${id}
-    `;
-
+    await sql`DELETE FROM campaigns WHERE id = ${id}`;
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error deleting campaign from database:', error);

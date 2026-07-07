@@ -122,6 +122,30 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Missing id or status' }, { status: 400 });
     }
 
+    // Update user balance in the users table when verifier approves/rejects
+    const subRes = await sql`SELECT user_email, reward, status FROM submissions WHERE id = ${id}`;
+    if (subRes.length > 0) {
+      const sub = subRes[0];
+      const oldStatus = sub.status;
+      const rewardVal = parseFloat(sub.reward);
+
+      if (status === 'Approved' && oldStatus !== 'Approved') {
+        // Add to user balance
+        await sql`
+          UPDATE users
+          SET balance = balance + ${rewardVal}
+          WHERE email = ${sub.user_email}
+        `;
+      } else if (status !== 'Approved' && oldStatus === 'Approved') {
+        // Subtract from user balance
+        await sql`
+          UPDATE users
+          SET balance = balance - ${rewardVal}
+          WHERE email = ${sub.user_email}
+        `;
+      }
+    }
+
     await sql`
       UPDATE submissions
       SET status = ${status}

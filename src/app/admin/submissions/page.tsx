@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { getCategoryIcon } from '../../../data/apps';
 
@@ -10,9 +10,88 @@ export default function SubmissionsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [lightboxMedia, setLightboxMedia] = useState<{ type: 'image' | 'video', url: string } | null>(null);
 
+  const [paymentDetails, setPaymentDetails] = useState<{ method: string; details: string } | null>(null);
+  const [loadingPayment, setLoadingPayment] = useState(false);
+
   // Filter submissions assigned to admin verifications
   const adminSubmissions = submissions.filter(sub => sub.verifierEmail === 'admin');
   const selectedSub = adminSubmissions.find(sub => sub.id === selectedSubId);
+
+  useEffect(() => {
+    if (!selectedSub) {
+      setPaymentDetails(null);
+      return;
+    }
+
+    async function fetchUserPayment() {
+      try {
+        setLoadingPayment(true);
+        const res = await fetch(`/api/users?email=${encodeURIComponent(selectedSub.userEmail)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPaymentDetails({
+            method: data.paymentMethod || 'UPI',
+            details: data.paymentDetails || 'N/A'
+          });
+        } else {
+          setPaymentDetails({ method: 'N/A', details: 'N/A' });
+        }
+      } catch (err) {
+        console.error(err);
+        setPaymentDetails({ method: 'N/A', details: 'N/A' });
+      } finally {
+        setLoadingPayment(false);
+      }
+    }
+
+    fetchUserPayment();
+  }, [selectedSub]);
+
+  const formatPaymentDetails = (detailsStr: string) => {
+    if (!detailsStr || detailsStr === 'N/A') {
+      return <strong className="meta-val">N/A</strong>;
+    }
+    if (detailsStr.trim().startsWith('{') || detailsStr.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(detailsStr);
+        
+        const renderEntry = (obj: any) => {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '6px' }}>
+              {Object.entries(obj).map(([k, v]: [string, any]) => {
+                const label = k
+                  .replace(/([A-Z])/g, ' $1') // insert spaces before capitals
+                  .replace(/^./, (str) => str.toUpperCase()) // capitalize first letter
+                  .replace('Upi Id', 'UPI ID')
+                  .replace('Ifsc', 'IFSC');
+                return (
+                  <div key={k} style={{ fontSize: '0.8rem', lineHeight: '1.3' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}:</span>{' '}
+                    <strong style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>{String(v)}</strong>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        };
+
+        if (Array.isArray(parsed)) {
+          const preferred = parsed.find((p: any) => p.isPreferred) || parsed[0];
+          if (!preferred) return <strong className="meta-val">N/A</strong>;
+          return (
+            <div>
+              <strong className="meta-val" style={{ display: 'block', marginBottom: '4px' }}>{preferred.methodName}</strong>
+              {renderEntry(preferred.details || {})}
+            </div>
+          );
+        }
+        return renderEntry(parsed);
+      } catch (e) {
+        return <strong className="meta-val" style={{ wordBreak: 'break-all' }}>{detailsStr}</strong>;
+      }
+    }
+    return <strong className="meta-val" style={{ wordBreak: 'break-all' }}>{detailsStr}</strong>;
+  };
 
   const handleCopy = (text: string, subId: string) => {
     navigator.clipboard.writeText(text);
@@ -59,7 +138,7 @@ export default function SubmissionsPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                    <span style={{ color: 'var(--accent-emerald)', fontWeight: 700, fontSize: '0.85rem' }}>+${sub.reward.toFixed(2)}</span>
+                    <span style={{ color: 'var(--accent-emerald)', fontWeight: 700, fontSize: '0.85rem' }}>+₹{sub.reward.toFixed(2)}</span>
                     <span style={{
                       display: 'inline-block',
                       padding: '2px 8px',
@@ -123,7 +202,23 @@ export default function SubmissionsPage() {
               </div>
               <div>
                 <span className="meta-lbl">Reward Amount</span>
-                <strong className="meta-val" style={{ color: 'var(--accent-emerald)' }}>+${selectedSub.reward.toFixed(2)}</strong>
+                <strong className="meta-val" style={{ color: 'var(--accent-emerald)' }}>+₹{selectedSub.reward.toFixed(2)}</strong>
+              </div>
+              <div>
+                <span className="meta-lbl">Payment Method</span>
+                <strong className="meta-val" style={{ color: 'var(--text-primary)' }}>
+                  {loadingPayment ? 'Loading...' : paymentDetails?.method || 'N/A'}
+                </strong>
+              </div>
+              <div>
+                <span className="meta-lbl">Payment Details / UPI ID</span>
+                <div style={{ wordBreak: 'break-all', minHeight: '24px' }}>
+                  {loadingPayment ? (
+                    <strong className="meta-val">Loading...</strong>
+                  ) : (
+                    formatPaymentDetails(paymentDetails?.details || 'N/A')
+                  )}
+                </div>
               </div>
               <div>
                 <span className="meta-lbl">Submitted At</span>
@@ -376,6 +471,9 @@ export default function SubmissionsPage() {
         .inspector-panel {
           position: sticky;
           top: 24px;
+          max-height: calc(100vh - 160px);
+          overflow-y: auto;
+          padding-right: 4px;
         }
 
         .inspector-content-card {

@@ -37,9 +37,10 @@ export async function POST(request: Request) {
       assignedRole = 'partner';
     }
 
+    const newId = crypto.randomUUID();
     await sql`
-      INSERT INTO users (email, password, full_name, role, balance)
-      VALUES (${normalizedEmail}, ${hashedPassword}, ${fullName}, ${assignedRole}, 100.00)
+      INSERT INTO users (id, email, password, full_name, role, balance)
+      VALUES (${newId}, ${normalizedEmail}, ${hashedPassword}, ${fullName}, ${assignedRole}, 0.00)
     `;
 
     return NextResponse.json({ success: true, message: 'User registered successfully!' });

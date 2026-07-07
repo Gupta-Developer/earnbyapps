@@ -77,7 +77,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { id: 'New Leads for Partnership', label: 'New Leads for Partnership', href: '/admin/partnership-leads', icon: '📝' },
     { id: 'All Submissions', label: 'All Submissions', href: '/admin/submissions', icon: '✔️' },
     { id: 'Manage Users', label: 'Manage Users', href: '/admin/users', icon: '👤' },
-    { id: 'Wallet', label: 'Wallet', href: '/admin/wallet', icon: '💼' },
     { id: 'Partner Support', label: 'Partner Support', href: '/admin/support', icon: '💬' },
     { id: 'Manage Banners', label: 'Manage Banners', href: '/admin/banners', icon: '🖼️' },
     { id: 'Manage Blog', label: 'Manage Blog', href: '/admin/blog', icon: '📰' },
