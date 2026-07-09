@@ -154,7 +154,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [verificationAssignments, setVerificationAssignments] = useState<VerificationAssignment[]>([]);
   const [walletBalance, setWalletBalance] = useState<number>(124.50);
   const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
-  const [theme, setTheme] = useState<AppTheme>('dark');
+  const [theme, setTheme] = useState<AppTheme>('light');
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Sync Google session with AppContext user profile and role
@@ -225,7 +225,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       if (storedTheme) {
         setTheme(storedTheme);
       } else {
-        setTheme('dark');
+        setTheme('light');
       }
       
       if (storedApps) {

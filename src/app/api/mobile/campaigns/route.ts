@@ -13,8 +13,9 @@ export async function GET(request: Request) {
     try {
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS assigned_email VARCHAR(255)`;
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+      await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS logo_url TEXT`;
     } catch (migErr) {
-      console.warn("Migration warning for assigned_email/is_active column:", migErr);
+      console.warn("Migration warning for assigned_email/is_active/logo_url column:", migErr);
     }
 
     const campaigns = await sql`
@@ -45,7 +46,8 @@ export async function GET(request: Request) {
       targetCompletions: Number(c.target_completions || 1000),
       videoUrl: c.video_url || undefined,
       reward: Number(c.reward),
-      assignedEmail: c.assigned_email || undefined
+      assignedEmail: c.assigned_email || undefined,
+      logoUrl: c.logo_url || undefined
     }));
 
     return NextResponse.json(formattedCampaigns);

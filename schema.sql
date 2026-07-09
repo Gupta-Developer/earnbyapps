@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
     currency_symbol VARCHAR(10) DEFAULT '$',
     target_completions INTEGER DEFAULT 1000,
     video_url TEXT,
+    logo_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
