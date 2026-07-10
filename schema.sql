@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
     target_completions INTEGER DEFAULT 1000,
     video_url TEXT,
     logo_url TEXT,
+    referral_code VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

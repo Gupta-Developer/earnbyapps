@@ -22,6 +22,46 @@ export default function TaskDetails({ params }: PageProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  const renderDescriptionWithCode = (text: string, code?: string) => {
+    if (!code || !text.includes('{referral_code}')) return text;
+    const parts = text.split('{referral_code}');
+    return (
+      <>
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {part}
+            {i < parts.length - 1 && (
+              <span 
+                onClick={() => {
+                  navigator.clipboard.writeText(code);
+                  setToastMessage('Referral code copied!');
+                  setTimeout(() => setToastMessage(null), 3000);
+                }}
+                title="Click to copy code"
+                style={{
+                  background: 'rgba(79, 70, 229, 0.15)',
+                  border: '1px dashed var(--accent-indigo)',
+                  color: 'var(--accent-indigo)',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace',
+                  margin: '0 4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {code} 📋
+              </span>
+            )}
+          </React.Fragment>
+        ))}
+      </>
+    );
+  };
+
   // Find the current app/campaign
   const app = apps.find(a => a.id === resolvedParams.id);
 
@@ -192,11 +232,48 @@ export default function TaskDetails({ params }: PageProps) {
             </div>
           </div>
 
-          <p className="app-detail-desc">{app.longDescription || app.description}</p>
+          <p className="app-detail-desc" style={{ whiteSpace: 'pre-wrap' }}>{renderDescriptionWithCode(app.longDescription || app.description || '', app.referralCode)}</p>
 
           {rejectedSub && (
             <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', padding: '16px', borderRadius: '8px', marginBottom: '24px', fontSize: '0.88rem', color: '#ef4444', fontWeight: 600 }}>
               ⚠️ Previous proof submission was rejected. Please review task requirements and resubmit with correct media proof below.
+            </div>
+          )}
+
+          {app.referralCode && (
+            <div className="referral-code-box" style={{
+              background: 'rgba(79, 70, 229, 0.05)',
+              border: '1px solid rgba(79, 70, 229, 0.2)',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', marginBottom: '4px' }}>Referral Code (Optional)</span>
+                <strong style={{ fontSize: '1.2rem', color: '#fff', fontFamily: 'monospace', letterSpacing: '1px' }}>{app.referralCode}</strong>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(app.referralCode || '');
+                  setToastMessage('Referral code copied to clipboard!');
+                  setTimeout(() => setToastMessage(null), 3000);
+                }}
+                className="glow-btn-cyan"
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '0.85rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Copy Code
+              </button>
             </div>
           )}
 

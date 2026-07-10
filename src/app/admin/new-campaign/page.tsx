@@ -29,6 +29,7 @@ export default function AdminNewCampaign() {
   const [logoUrl, setLogoUrl] = useState('');
   const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Easy');
   const [tagsInput, setTagsInput] = useState('New, Promoted');
+  const [referralCode, setReferralCode] = useState('');
 
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
@@ -85,7 +86,8 @@ export default function AdminNewCampaign() {
       targetCompletions: submissionsCount,
       videoUrl: videoUrl || undefined,
       reward: payoutNum,
-      logoUrl: logoUrl || undefined
+      logoUrl: logoUrl || undefined,
+      referralCode: referralCode || undefined
     });
 
     setSuccess(true);
@@ -104,6 +106,7 @@ export default function AdminNewCampaign() {
     setLogoUrl('');
     setDifficulty('Easy');
     setTagsInput('New, Promoted');
+    setReferralCode('');
     setSuccess(false);
   };
 
@@ -365,6 +368,17 @@ export default function AdminNewCampaign() {
           </div>
 
           <div className="form-group">
+            <label htmlFor="referral-code">Referral Code (Optional)</label>
+            <input 
+              id="referral-code"
+              type="text" 
+              value={referralCode} 
+              onChange={(e) => setReferralCode(e.target.value)} 
+              placeholder="e.g. REFER100, BONUSFREE"
+            />
+          </div>
+
+          <div className="form-group">
             <label>Platform *</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               {['iOS', 'Android', 'Web'].map(plat => (
@@ -399,6 +413,7 @@ export default function AdminNewCampaign() {
               style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-color)', padding: '10px 14px', borderRadius: '6px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem', minHeight: '100px', resize: 'vertical' }}
               required
             />
+            <span className="input-helper">Tip: Insert <code>{"{referral_code}"}</code> anywhere in the steps/description to display a copyable referral code badge inline.</span>
           </div>
 
           <button type="submit" className="glow-btn-cyan" style={{ padding: '12px 24px', width: '100%', marginTop: '20px' }}>

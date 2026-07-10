@@ -25,6 +25,42 @@ export default function CreatePartnerCampaign() {
   const [platforms, setPlatforms] = useState<('iOS' | 'Android' | 'Web')[]>([]);
   const [payout, setPayout] = useState<number>(0.50);
   const [targetCompletions, setTargetCompletions] = useState<number>(1000);
+  const [referralCode, setReferralCode] = useState('');
+  const [description, setDescription] = useState('');
+
+  const renderDescriptionWithCode = (text: string, code: string) => {
+    if (!text) return 'Get rewarded for completing actions. Start task to redirect and begin.';
+    if (!code || !text.includes('{referral_code}')) return text;
+    const parts = text.split('{referral_code}');
+    return (
+      <>
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {part}
+            {i < parts.length - 1 && (
+              <span 
+                style={{
+                  background: 'rgba(79, 70, 229, 0.15)',
+                  border: '1px dashed rgba(165, 180, 252, 0.5)',
+                  color: '#a5b4fc',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace',
+                  fontSize: '0.62rem',
+                  margin: '0 2px',
+                  display: 'inline-flex',
+                  alignItems: 'center'
+                }}
+              >
+                {code}
+              </span>
+            )}
+          </React.Fragment>
+        ))}
+      </>
+    );
+  };
 
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
@@ -63,8 +99,8 @@ export default function CreatePartnerCampaign() {
       platforms,
       earningRate: displayEarningRate,
       averageEarningsPerDay: payout,
-      description: `Complete tasks in ${taskName} to earn rewards.`,
-      longDescription: `Get rewarded for completing actions on ${taskName}. Click start task to redirect and begin.`,
+      description: description || `Complete tasks in ${taskName} to earn rewards.`,
+      longDescription: description || `Get rewarded for completing actions on ${taskName}. Click start task to redirect and begin.`,
       tags: [category, 'Promoted'],
       actionText: `Open ${taskName}`,
       externalUrl: taskLink,
@@ -74,7 +110,8 @@ export default function CreatePartnerCampaign() {
       totalBudget: parseFloat((targetCompletions * payout).toFixed(2)),
       targetCountry: targetCountry,
       currency: details.currency,
-      currencySymbol: details.symbol
+      currencySymbol: details.symbol,
+      referralCode: referralCode || undefined
     });
 
     setSuccess(true);
@@ -88,6 +125,8 @@ export default function CreatePartnerCampaign() {
     setPlatforms([]);
     setPayout(0.50);
     setTargetCompletions(1000);
+    setReferralCode('');
+    setDescription('');
     setSuccess(false);
   };
 
@@ -294,6 +333,31 @@ export default function CreatePartnerCampaign() {
               </div>
 
               <div className="form-group">
+                <label htmlFor="referral-code">Referral Code (Optional)</label>
+                <input 
+                  id="referral-code"
+                  type="text" 
+                  value={referralCode} 
+                  onChange={(e) => setReferralCode(e.target.value)} 
+                  placeholder="e.g. REFER100, BONUSFREE"
+                />
+                <span className="input-helper">Optional referral or promo code that users should copy/use during sign-up.</span>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="description">Description / Steps *</label>
+                <textarea 
+                  id="description"
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  placeholder="e.g. Step 1: Click start task. Step 2: Use code {referral_code}."
+                  required
+                  style={{ minHeight: '100px', resize: 'vertical' }}
+                />
+                <span className="input-helper">Detailed steps for users. Use <code>{"{referral_code}"}</code> to show a copyable badge inline.</span>
+              </div>
+
+              <div className="form-group">
                 <label>Conversion Platform *</label>
                 <div className="checkbox-row" style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
                   {[
@@ -485,9 +549,9 @@ export default function CreatePartnerCampaign() {
                   </div>
 
                   <div style={{ borderTop: '1px solid #1f293d', paddingTop: '8px' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#9ca3af', display: 'block', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>Guidelines</span>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', lineHeight: 1.4 }}>
-                      Get rewarded for completing actions on {taskName || 'your campaign'}. Click start task to redirect and begin.
+                    <span style={{ fontSize: '0.72rem', color: '#9ca3af', display: 'block', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>Guidelines / Steps</span>
+                    <p style={{ margin: 0, fontSize: 0.72 + "rem", color: '#9ca3af', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                      {renderDescriptionWithCode(description, referralCode)}
                     </p>
                   </div>
                 </div>

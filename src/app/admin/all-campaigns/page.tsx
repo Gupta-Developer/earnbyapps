@@ -38,6 +38,8 @@ export default function AdminAllCampaigns() {
   const [editTags, setEditTags] = useState('');
   const [editPlatforms, setEditPlatforms] = useState<('iOS' | 'Android' | 'Web')[]>([]);
   const [editAssignedEmail, setEditAssignedEmail] = useState('');
+  const [editReferralCode, setEditReferralCode] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   // Search state for country inside edit modal
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
@@ -81,6 +83,8 @@ export default function AdminAllCampaigns() {
       setEditTags(editingApp.tags?.join(', ') || '');
       setEditPlatforms(editingApp.platforms || []);
       setEditAssignedEmail(editingApp.assignedEmail || '');
+      setEditReferralCode(editingApp.referralCode || '');
+      setEditDescription(editingApp.longDescription || editingApp.description || '');
     }
   }, [editingApp]);
 
@@ -150,7 +154,10 @@ export default function AdminAllCampaigns() {
       videoUrl: editVideo || undefined,
       reward: payoutNum,
       logoUrl: editLogo || undefined,
-      assignedEmail: editAssignedEmail || undefined
+      assignedEmail: editAssignedEmail || undefined,
+      referralCode: editReferralCode || undefined,
+      description: editDescription,
+      longDescription: editDescription
     };
 
     updateOffer(updatedApp);
@@ -665,6 +672,30 @@ export default function AdminAllCampaigns() {
                   className="drawer-input"
                   placeholder="Fast, Sign Up, No KYC"
                 />
+              </div>
+
+              <div className="drawer-form-group">
+                <label>Referral Code (Optional)</label>
+                <input 
+                  type="text" 
+                  value={editReferralCode} 
+                  onChange={(e) => setEditReferralCode(e.target.value)} 
+                  className="drawer-input"
+                  placeholder="e.g. REFER100"
+                />
+              </div>
+
+              <div className="drawer-form-group">
+                <label>Description / Steps *</label>
+                <textarea 
+                  value={editDescription} 
+                  onChange={(e) => setEditDescription(e.target.value)} 
+                  required
+                  className="drawer-input"
+                  style={{ minHeight: '80px', resize: 'vertical', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', padding: '10px 14px', borderRadius: '6px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem' }}
+                  placeholder="Steps..."
+                />
+                <span className="input-helper" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Use <code>{"{referral_code}"}</code> for inline copyable badge.</span>
               </div>
 
               <div className="drawer-form-group">

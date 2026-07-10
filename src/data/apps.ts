@@ -31,6 +31,7 @@ export interface EarningApp {
   reward: number; // Single reward amount
   assignedEmail?: string;
   isActive?: boolean;
+  referralCode?: string;
 }
 
 export const EARNING_APPS: EarningApp[] = [

@@ -6,7 +6,7 @@ import crypto from 'crypto';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, deviceId } = body;
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
@@ -15,8 +15,9 @@ export async function POST(request: Request) {
     // Ensure database table has the password column
     try {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255)`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS device_id VARCHAR(255)`;
     } catch (migErr) {
-      console.warn("Migration warning for password column:", migErr);
+      console.warn("Migration warning for columns:", migErr);
     }
 
     // Find user by email
@@ -38,6 +39,27 @@ export async function POST(request: Request) {
 
     if (hashedPassword !== user.password) {
       return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 });
+    }
+
+    // Associate device_id if not already set for this user, and ensure it's not linked to another account
+    if (deviceId) {
+      const deviceCheck = await sql`SELECT email FROM users WHERE device_id = ${deviceId} AND id != ${user.id}`;
+      if (deviceCheck.length > 0) {
+        const registeredEmail = deviceCheck[0].email;
+        const [localPart, domainPart] = registeredEmail.split('@');
+        const maskedLocal = localPart.length > 2 
+          ? localPart.substring(0, 2) + '*'.repeat(localPart.length - 2) 
+          : localPart + '***';
+        const maskedEmail = `${maskedLocal}@${domainPart}`;
+        return NextResponse.json({ 
+          error: `This device is already registered with the email: ${maskedEmail}` 
+        }, { status: 400 });
+      }
+
+      if (!user.device_id) {
+        await sql`UPDATE users SET device_id = ${deviceId} WHERE id = ${user.id}`;
+        user.device_id = deviceId;
+      }
     }
 
     // Sign the JWT token

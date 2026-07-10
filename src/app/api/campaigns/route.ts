@@ -25,7 +25,8 @@ function mapCampaign(c: any) {
     reward: Number(c.reward),
     assignedEmail: c.assigned_email || undefined,
     isActive: c.is_active !== false,
-    logoUrl: c.logo_url || undefined
+    logoUrl: c.logo_url || undefined,
+    referralCode: c.referral_code || undefined
   };
 }
 
@@ -42,8 +43,9 @@ export async function GET(request: Request) {
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS assigned_email VARCHAR(255)`;
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
       await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS logo_url TEXT`;
+      await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS referral_code VARCHAR(255)`;
     } catch (migErr) {
-      console.warn("Migration warning for assigned_email/is_active/logo_url column:", migErr);
+      console.warn("Migration warning for assigned_email/is_active/logo_url/referral_code column:", migErr);
     }
 
     if (!page) {
@@ -118,7 +120,8 @@ export async function POST(request: Request) {
       reward,
       assignedEmail,
       isActive,
-      logoUrl
+      logoUrl,
+      referralCode
     } = body;
 
     const platformsStr = Array.isArray(platforms) ? platforms.join(',') : (platforms || 'Web');
@@ -129,16 +132,17 @@ export async function POST(request: Request) {
     const finalAssignedEmail = assignedEmail || null;
     const active = isActive !== undefined ? isActive : true;
     const finalLogoUrl = logoUrl || null;
+    const finalReferralCode = referralCode || null;
 
     await sql`
       INSERT INTO campaigns (
         id, name, category, platforms, earning_rate, reward, 
         description, long_description, tags, external_url, 
-        target_country, currency, currency_symbol, target_completions, video_url, assigned_email, is_active, logo_url
+        target_country, currency, currency_symbol, target_completions, video_url, assigned_email, is_active, logo_url, referral_code
       ) VALUES (
         ${finalId}, ${name}, ${category}, ${platformsStr}, ${earningRate}, ${rewardNum},
         ${description}, ${longDescription || description}, ${tagsStr}, ${externalUrl},
-        ${targetCountry || 'Global'}, ${currency || 'USD'}, ${currencySymbol || '$'}, ${compsCount}, ${videoUrl || null}, ${finalAssignedEmail}, ${active}, ${finalLogoUrl}
+        ${targetCountry || 'Global'}, ${currency || 'USD'}, ${currencySymbol || '$'}, ${compsCount}, ${videoUrl || null}, ${finalAssignedEmail}, ${active}, ${finalLogoUrl}, ${finalReferralCode}
       )
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
@@ -157,7 +161,8 @@ export async function POST(request: Request) {
         video_url = EXCLUDED.video_url,
         assigned_email = EXCLUDED.assigned_email,
         is_active = EXCLUDED.is_active,
-        logo_url = EXCLUDED.logo_url
+        logo_url = EXCLUDED.logo_url,
+        referral_code = EXCLUDED.referral_code
     `;
 
     return NextResponse.json({ success: true, id: finalId });

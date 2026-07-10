@@ -47,6 +47,7 @@ export interface PartnershipLead {
   targetCountry?: string;
   currency?: string;
   currencySymbol?: string;
+  referralCode?: string;
 }
 
 export interface VerificationAssignment {
