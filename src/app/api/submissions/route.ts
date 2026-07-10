@@ -17,9 +17,15 @@ async function ensureSubmissionsTable() {
       verifier_email VARCHAR(255) NOT NULL,
       verification_type VARCHAR(50) DEFAULT 'admin',
       referral_slot_id VARCHAR(255),
+      origin_app_id VARCHAR(100) DEFAULT 'main',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
+  try {
+    await sql`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS origin_app_id VARCHAR(100) DEFAULT 'main'`;
+  } catch (migErr) {
+    console.warn("Migration warning for submissions column origin_app_id:", migErr);
+  }
 }
 
 export async function GET() {
@@ -60,7 +66,8 @@ export async function GET() {
         time: timeStr,
         verifierEmail: r.verifier_email,
         verificationType: r.verification_type as 'admin' | 'creator',
-        referralSlotId: r.referral_slot_id || undefined
+        referralSlotId: r.referral_slot_id || undefined,
+        originAppId: r.origin_app_id || 'main'
       };
     });
 
@@ -88,20 +95,22 @@ export async function POST(req: Request) {
       status,
       verifierEmail,
       verificationType,
-      referralSlotId
+      referralSlotId,
+      originAppId
     } = body;
 
     const finalProofType = proofType && proofType !== 'text' ? proofType : (proofUrl ? 'image' : 'text');
+    const finalOriginAppId = originAppId || 'main';
 
     await sql`
       INSERT INTO submissions (
         id, user_name, user_email, app_name, app_id, reward,
         proof, proof_type, proof_url, status, verifier_email,
-        verification_type, referral_slot_id
+        verification_type, referral_slot_id, origin_app_id
       ) VALUES (
         ${id}, ${userName}, ${userEmail}, ${appName}, ${appId}, ${reward},
         ${proof}, ${finalProofType}, ${proofUrl || null}, ${status || 'Pending'}, ${verifierEmail},
-        ${verificationType}, ${referralSlotId || null}
+        ${verificationType}, ${referralSlotId || null}, ${finalOriginAppId}
       )
     `;
 

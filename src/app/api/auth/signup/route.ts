@@ -5,17 +5,18 @@ import crypto from 'crypto';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, fullName, role } = body;
+    const { email, password, fullName, role, originAppId } = body;
 
     if (!email || !password || !fullName) {
       return NextResponse.json({ error: 'Email, Password and Full Name are required.' }, { status: 400 });
     }
 
-    // Ensure database table has the password column
+    // Ensure database table has the required columns
     try {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255)`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS origin_app_id VARCHAR(100) DEFAULT 'main'`;
     } catch (migErr) {
-      console.warn("Migration warning for password column:", migErr);
+      console.warn("Migration warning for users columns:", migErr);
     }
 
     // Check if user already exists
@@ -38,9 +39,10 @@ export async function POST(request: Request) {
     }
 
     const newId = crypto.randomUUID();
+    const finalOriginAppId = originAppId || 'main';
     await sql`
-      INSERT INTO users (id, email, password, full_name, role, balance)
-      VALUES (${newId}, ${normalizedEmail}, ${hashedPassword}, ${fullName}, ${assignedRole}, 0.00)
+      INSERT INTO users (id, email, password, full_name, role, balance, origin_app_id)
+      VALUES (${newId}, ${normalizedEmail}, ${hashedPassword}, ${fullName}, ${assignedRole}, 0.00, ${finalOriginAppId})
     `;
 
     return NextResponse.json({ success: true, message: 'User registered successfully!' });

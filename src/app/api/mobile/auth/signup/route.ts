@@ -6,17 +6,18 @@ import crypto from 'crypto';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, fullName, role } = body;
+    const { email, password, fullName, role, originAppId } = body;
 
     if (!email || !password || !fullName) {
       return NextResponse.json({ error: 'Email, Password and Full Name are required.' }, { status: 400 });
     }
 
-    // Ensure database table has the password column
+    // Ensure database table has the required columns
     try {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255)`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS origin_app_id VARCHAR(100) DEFAULT 'main'`;
     } catch (migErr) {
-      console.warn("Migration warning for password column:", migErr);
+      console.warn("Migration warning for users columns:", migErr);
     }
 
     const normalizedEmail = email.toLowerCase();
@@ -40,10 +41,11 @@ export async function POST(request: Request) {
     }
 
     const newId = crypto.randomUUID();
+    const finalOriginAppId = originAppId || 'main';
     const result = await sql`
-      INSERT INTO users (id, email, password, full_name, role, balance)
-      VALUES (${newId}, ${normalizedEmail}, ${hashedPassword}, ${fullName}, ${assignedRole}, 100.00)
-      RETURNING id, email, full_name as "fullName", role, balance
+      INSERT INTO users (id, email, password, full_name, role, balance, origin_app_id)
+      VALUES (${newId}, ${normalizedEmail}, ${hashedPassword}, ${fullName}, ${assignedRole}, 100.00, ${finalOriginAppId})
+      RETURNING id, email, full_name as "fullName", role, balance, origin_app_id as "originAppId"
     `;
 
     const newUser = result[0];
@@ -64,7 +66,8 @@ export async function POST(request: Request) {
         email: newUser.email,
         fullName: newUser.fullName,
         role: newUser.role,
-        balance: Number(newUser.balance)
+        balance: Number(newUser.balance),
+        originAppId: newUser.originAppId
       }
     }, { status: 201 });
   } catch (error: any) {

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     balance NUMERIC(10, 2) DEFAULT 0.00,
     payment_method VARCHAR(100),
     payment_details TEXT,
+    origin_app_id VARCHAR(100) DEFAULT 'main',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -63,6 +64,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     verifier_email VARCHAR(255) NOT NULL, -- 'admin' or user's email
     verification_type VARCHAR(50) DEFAULT 'admin', -- 'admin' or 'creator'
     referral_slot_id VARCHAR(255),
+    origin_app_id VARCHAR(100) DEFAULT 'main',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
