@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { countries, getCountryCurrency } from '../../../data/countries';
+import { getCategoryIcon } from '../../../data/apps';
 
 const COUNTRY_CURRENCIES: Record<string, { currency: string; symbol: string }> = {
   'Global': { currency: 'USD', symbol: '$' },
@@ -16,7 +17,8 @@ export default function AdminNewCampaign() {
   const { submitOffer } = useApp();
 
   const [taskName, setTaskName] = useState('');
-  const [category, setCategory] = useState<'Gaming' | 'Surveys' | 'App Testing' | 'Passive' | 'App Install & Sign Up' | 'LinkedIn Followers' | 'Google Maps Reviews' | 'Telegram Members' | 'WhatsApp Members' | 'Instagram Followers' | 'Facebook Page Followers' | 'Youtube Subscribers' | 'Trustpilot Reviews' | 'Justdial Reviews' | 'Play Store Reviews' | 'Custom Task'>('Gaming');
+  const [category, setCategory] = useState<'Gaming' | 'Surveys' | 'App Testing' | 'App Store Reviews' | 'App Install & Sign Up' | 'LinkedIn Followers' | 'Google Maps Reviews' | 'Telegram Members' | 'WhatsApp Members' | 'Instagram Followers' | 'Facebook Page Followers' | 'Youtube Subscribers' | 'Trustpilot Reviews' | 'Justdial Reviews' | 'Play Store Reviews' | 'Custom Task'>('Gaming');
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [targetCountry, setTargetCountry] = useState('Global');
   const [payout, setPayout] = useState('0.50');
   const [taskLink, setTaskLink] = useState('');
@@ -138,31 +140,121 @@ export default function AdminNewCampaign() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="grid-responsive">
-            <div className="form-group">
-              <label htmlFor="category">Category *</label>
-              <select 
-                id="category"
-                value={category} 
-                onChange={(e) => setCategory(e.target.value as any)}
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', color: 'var(--text-primary)', height: '40px' }}
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label>Category *</label>
+              <button
+                type="button"
+                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  color: 'var(--text-primary)',
+                  height: '40px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
               >
-                <option value="App Install & Sign Up">📲 App Install & Sign Up</option>
-                <option value="LinkedIn Followers">👔 LinkedIn Followers</option>
-                <option value="Google Maps Reviews">📍 Google Maps Reviews</option>
-                <option value="Telegram Members">✈️ Telegram Members</option>
-                <option value="WhatsApp Members">💬 WhatsApp Members</option>
-                <option value="Instagram Followers">📸 Instagram Followers</option>
-                <option value="Facebook Page Followers">👍 Facebook Page Followers</option>
-                <option value="Youtube Subscribers">▶️ Youtube Subscribers</option>
-                <option value="Trustpilot Reviews">⭐ Trustpilot Reviews</option>
-                <option value="Justdial Reviews">📞 Justdial Reviews</option>
-                <option value="Play Store Reviews">🤖 Play Store Reviews</option>
-                <option value="Custom Task">⚙️ Custom Task</option>
-                <option value="Gaming">🎮 Gaming</option>
-                <option value="Surveys">📋 Surveys</option>
-                <option value="App Testing">🧪 App Testing</option>
-                <option value="Passive">💸 Passive</option>
-              </select>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {getCategoryIcon(category)}
+                  <span>{
+                    (() => {
+                      const categoriesList = [
+                        { value: 'App Install & Sign Up', label: 'App Install & Sign Up' },
+                        { value: 'LinkedIn Followers', label: 'LinkedIn Followers' },
+                        { value: 'Google Maps Reviews', label: 'Google Maps Reviews' },
+                        { value: 'Telegram Members', label: 'Telegram Members' },
+                        { value: 'WhatsApp Members', label: 'WhatsApp Members' },
+                        { value: 'Instagram Followers', label: 'Instagram Followers' },
+                        { value: 'Facebook Page Followers', label: 'Facebook Page Followers' },
+                        { value: 'Youtube Subscribers', label: 'Youtube Subscribers' },
+                        { value: 'Trustpilot Reviews', label: 'Trustpilot Reviews' },
+                        { value: 'Justdial Reviews', label: 'Justdial Reviews' },
+                        { value: 'Play Store Reviews', label: 'Play Store Reviews' },
+                        { value: 'App Store Reviews', label: 'App Store Reviews' },
+                        { value: 'Custom Task', label: 'Custom Task' },
+                        { value: 'Gaming', label: 'Gaming' },
+                        { value: 'Surveys', label: 'Surveys' },
+                        { value: 'App Testing', label: 'App Testing' }
+                      ];
+                      return categoriesList.find(c => c.value === category)?.label || category;
+                    })()
+                  }</span>
+                </span>
+                <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>▼</span>
+              </button>
+
+              {isCategoryDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 205,
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  boxShadow: 'var(--shadow-premium)',
+                  marginTop: '4px',
+                  padding: '8px',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
+                  {[
+                    { value: 'App Install & Sign Up', label: 'App Install & Sign Up' },
+                    { value: 'LinkedIn Followers', label: 'LinkedIn Followers' },
+                    { value: 'Google Maps Reviews', label: 'Google Maps Reviews' },
+                    { value: 'Telegram Members', label: 'Telegram Members' },
+                    { value: 'WhatsApp Members', label: 'WhatsApp Members' },
+                    { value: 'Instagram Followers', label: 'Instagram Followers' },
+                    { value: 'Facebook Page Followers', label: 'Facebook Page Followers' },
+                    { value: 'Youtube Subscribers', label: 'Youtube Subscribers' },
+                    { value: 'Trustpilot Reviews', label: 'Trustpilot Reviews' },
+                    { value: 'Justdial Reviews', label: 'Justdial Reviews' },
+                    { value: 'Play Store Reviews', label: 'Play Store Reviews' },
+                    { value: 'App Store Reviews', label: 'App Store Reviews' },
+                    { value: 'Custom Task', label: 'Custom Task' },
+                    { value: 'Gaming', label: 'Gaming' },
+                    { value: 'Surveys', label: 'Surveys' },
+                    { value: 'App Testing', label: 'App Testing' }
+                  ].map(cat => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => {
+                        setCategory(cat.value as any);
+                        setIsCategoryDropdownOpen(false);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-primary)',
+                        padding: '8px 10px',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        transition: 'all 0.15s'
+                      }}
+                      className="country-item-btn"
+                    >
+                      {getCategoryIcon(cat.value)}
+                      <span>{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="form-group" style={{ position: 'relative' }}>
