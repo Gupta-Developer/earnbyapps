@@ -70,7 +70,7 @@ export interface Submission {
   proof: string;
   proofType?: 'image' | 'video' | 'text';
   proofUrl?: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: 'Pending' | 'Paid' | 'Rejected';
   time: string;
   verifierEmail: string; // 'admin' or user's email
   verificationType: 'admin' | 'creator';
@@ -140,8 +140,8 @@ const INITIAL_LEADS: PartnershipLead[] = [
 const INITIAL_SUBMISSIONS: Submission[] = [
   { id: 'sub-1', userName: 'Test User', userEmail: 'user@example.com', appName: 'Swagbucks', appId: 'swagbucks', taskId: 'sb-2', taskTitle: 'Take Daily Gold Survey', reward: 2.50, proof: 'Completed survey gold #4321', time: '10 mins ago', status: 'Pending', verifierEmail: 'admin', verificationType: 'admin' },
   { id: 'sub-2', userName: 'Raj Patel', userEmail: 'raj@gmail.com', appName: 'Mistplay', appId: 'mistplay', taskId: 'mp-2', taskTitle: 'Reach Level 10 in Raid Shadow Legends', reward: 6.50, proof: 'Profile level screenshot uploaded', time: '1 hour ago', status: 'Pending', verifierEmail: 'admin', verificationType: 'admin' },
-  { id: 'sub-3', userName: 'Sonia Sharma', userEmail: 'sonia@gmail.com', appName: 'Prime Opinion', appId: 'primeopinion', taskId: 'po-2', taskTitle: 'Reach Level 2', reward: 1.00, proof: 'Verified level 2 dashboard screenshot', time: '4 hours ago', status: 'Approved', verifierEmail: 'admin', verificationType: 'admin' },
-  { id: 'sub-4', userName: 'Amit Verma', userEmail: 'amit@gmail.com', appName: 'Honeygain', appId: 'honeygain', taskId: 'hg-2', taskTitle: 'Share First 10GB of Data', reward: 2.50, proof: 'Client ID: hg_98248924823', time: '1 day ago', status: 'Approved', verifierEmail: 'admin', verificationType: 'admin' }
+  { id: 'sub-3', userName: 'Sonia Sharma', userEmail: 'sonia@gmail.com', appName: 'Prime Opinion', appId: 'primeopinion', taskId: 'po-2', taskTitle: 'Reach Level 2', reward: 1.00, proof: 'Verified level 2 dashboard screenshot', time: '4 hours ago', status: 'Paid', verifierEmail: 'admin', verificationType: 'admin' },
+  { id: 'sub-4', userName: 'Amit Verma', userEmail: 'amit@gmail.com', appName: 'Honeygain', appId: 'honeygain', taskId: 'hg-2', taskTitle: 'Share First 10GB of Data', reward: 2.50, proof: 'Client ID: hg_98248924823', time: '1 day ago', status: 'Paid', verifierEmail: 'admin', verificationType: 'admin' }
 ];
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
@@ -632,10 +632,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         fetch('/api/submissions', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: submissionId, status: 'Approved' })
+          body: JSON.stringify({ id: submissionId, status: 'Paid' })
         }).catch(err => console.error("Failed to approve submission in database:", err));
 
-        return { ...sub, status: 'Approved' };
+        return { ...sub, status: 'Paid' };
       }
       return sub;
     }));

@@ -47,7 +47,8 @@ export async function GET(request: Request) {
       videoUrl: c.video_url || undefined,
       reward: Number(c.reward),
       assignedEmail: c.assigned_email || undefined,
-      logoUrl: c.logo_url || undefined
+      logoUrl: c.logo_url || undefined,
+      referralCode: c.referral_code || undefined
     }));
 
     return NextResponse.json(formattedCampaigns);

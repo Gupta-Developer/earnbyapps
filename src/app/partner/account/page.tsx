@@ -1,15 +1,40 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useSession } from 'next-auth/react';
 
 export default function PartnerAccountPage() {
-  const { userProfile } = useApp();
+  const { userProfile, updateUserProfile } = useApp();
   const { data: session } = useSession();
 
-  const handleEditProfile = () => {
-    window.dispatchEvent(new CustomEvent('open-profile-modal'));
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Local form states
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [gender, setGender] = useState('');
+
+  // Sync form states with profile data
+  useEffect(() => {
+    if (userProfile) {
+      setFullName(userProfile.fullName || '');
+      setPhone(userProfile.phone || '');
+      setGender(userProfile.gender || 'Male');
+    }
+  }, [userProfile, isEditing]);
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (userProfile) {
+      updateUserProfile({
+        ...userProfile,
+        fullName,
+        phone,
+        gender
+      });
+    }
+    setIsEditing(false);
   };
 
   return (
@@ -32,94 +57,94 @@ export default function PartnerAccountPage() {
             <h2>{userProfile?.fullName || 'Partner User'}</h2>
             <p className="profile-role-badge">Campaign Partner</p>
           </div>
-          <button onClick={handleEditProfile} className="edit-profile-btn">
-            ✏️ Edit Profile
-          </button>
+          {!isEditing && (
+            <button onClick={() => setIsEditing(true)} className="edit-profile-btn">
+              ✏️ Edit Profile
+            </button>
+          )}
         </div>
 
         <hr className="divider" />
 
-        {/* Profile Details Sections */}
-        <div className="details-grid">
-          {/* Personal Info */}
-          <div className="details-section">
-            <h3>📋 Personal Information</h3>
-            <div className="details-list">
-              <div className="detail-item">
-                <span className="detail-label">Full Name</span>
-                <span className="detail-value">{userProfile?.fullName || 'Not Shared'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Email Address</span>
-                <span className="detail-value">{userProfile?.email || 'Not Shared'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Phone Number</span>
-                <span className="detail-value">{userProfile?.phone || 'Not Shared'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Gender</span>
-                <span className="detail-value">{userProfile?.gender || 'Not Shared'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Country</span>
-                <span className="detail-value">{userProfile?.country || 'Not Shared'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Payout Details */}
-          <div className="details-section">
-            <h3>💳 Payout Information</h3>
-            <div className="details-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {userProfile?.paymentDetails && (userProfile.paymentDetails.trim().startsWith('[') || userProfile.paymentDetails.trim().startsWith('{')) ? (
-                (() => {
-                  try {
-                    const parsed = JSON.parse(userProfile.paymentDetails);
-                    if (Array.isArray(parsed)) {
-                      return parsed.map((m: any, idx: number) => (
-                        <div key={m.id || idx} style={{ borderBottom: idx < parsed.length - 1 ? '1px dashed var(--border-color)' : 'none', paddingBottom: '12px', marginBottom: '4px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{m.methodName}</span>
-                            {m.isPreferred && (
-                              <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: '#10b981', color: 'white', borderRadius: '4px', fontWeight: 'bold' }}>
-                                Active
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '0.85rem', paddingLeft: '8px' }}>
-                            {Object.entries(m.details || {}).map(([key, val]: [string, any]) => (
-                              <div key={key} style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
-                                <span style={{ textTransform: 'capitalize', color: 'var(--text-muted)' }}>{key.replace('_', ' ')}:</span> {val}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ));
-                    }
-                  } catch (e) {}
-                  return (
-                    <div className="detail-item">
-                      <span className="detail-label">Details</span>
-                      <span className="detail-value text-monospace">{userProfile?.paymentDetails}</span>
-                    </div>
-                  );
-                })()
+        {/* Profile Details Section */}
+        <form onSubmit={handleSave} className="details-section">
+          <h3 className="section-title">📋 Personal Information</h3>
+          
+          <div className="details-list">
+            {/* Full Name */}
+            <div className="detail-item">
+              <span className="detail-label">Full Name</span>
+              {isEditing ? (
+                <input 
+                  type="text" 
+                  value={fullName} 
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="edit-input"
+                  required
+                />
               ) : (
-                <>
-                  <div className="detail-item">
-                    <span className="detail-label">Payment Method</span>
-                    <span className="detail-value highlight-payout">{userProfile?.paymentMethod || 'Not Configured'}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Payment Details</span>
-                    <span className="detail-value text-monospace">{userProfile?.paymentDetails || 'Not Configured'}</span>
-                  </div>
-                </>
+                <span className="detail-value">{userProfile?.fullName || 'Not Shared'}</span>
+              )}
+            </div>
+
+            {/* Email Address (Always read-only/verified) */}
+            <div className="detail-item">
+              <span className="detail-label">Email Address</span>
+              <span className="detail-value text-muted-email">{userProfile?.email || 'Not Shared'}</span>
+            </div>
+
+            {/* Phone Number */}
+            <div className="detail-item">
+              <span className="detail-label">Phone Number</span>
+              {isEditing ? (
+                <input 
+                  type="tel" 
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="edit-input"
+                  placeholder="e.g. +91 9876543210"
+                />
+              ) : (
+                <span className="detail-value">{userProfile?.phone || 'Not Shared'}</span>
+              )}
+            </div>
+
+            {/* Gender */}
+            <div className="detail-item">
+              <span className="detail-label">Gender</span>
+              {isEditing ? (
+                <select 
+                  value={gender} 
+                  onChange={(e) => setGender(e.target.value)}
+                  className="edit-select"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              ) : (
+                <span className="detail-value">{userProfile?.gender || 'Not Shared'}</span>
               )}
             </div>
           </div>
-        </div>
+
+          {/* Form Actions */}
+          {isEditing && (
+            <div className="form-actions">
+              <button type="submit" className="save-btn">
+                💾 Save Changes
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setIsEditing(false)} 
+                className="cancel-btn"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </form>
       </div>
 
       <style>{`
@@ -204,40 +229,28 @@ export default function PartnerAccountPage() {
           background: var(--border-color);
           margin: 32px 0;
         }
-        .details-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 32px;
+        .details-section {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
         }
-        @media (max-width: 768px) {
-          .details-grid {
-            grid-template-columns: 1fr;
-          }
-          .account-header {
-            flex-direction: column;
-            text-align: center;
-          }
-          .edit-profile-btn {
-            width: 100%;
-          }
-        }
-        .details-section h3 {
+        .section-title {
           font-family: var(--font-display);
           font-size: 1.2rem;
-          margin: 0 0 16px 0;
+          margin: 0 0 8px 0;
           color: var(--text-primary);
           border-bottom: 1px dashed var(--border-color);
           padding-bottom: 8px;
         }
         .details-list {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px 32px;
         }
         .detail-item {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 6px;
         }
         .detail-label {
           font-size: 0.75rem;
@@ -250,18 +263,91 @@ export default function PartnerAccountPage() {
           color: var(--text-primary);
           font-weight: 500;
         }
-        .highlight-payout {
-          color: #10b981;
-          font-weight: 700;
+        .text-muted-email {
+          font-size: 0.95rem;
+          color: var(--text-secondary);
+          opacity: 0.8;
+          font-weight: 500;
         }
-        .text-monospace {
-          font-family: monospace;
-          background: rgba(0, 0, 0, 0.15);
-          padding: 4px 8px;
-          border-radius: 4px;
-          display: inline-block;
-          font-size: 0.85rem;
+        .edit-input {
+          width: 100%;
+          max-width: 450px;
+          padding: 10px 14px;
+          border-radius: 8px;
+          background: var(--bg-dark);
+          border: 1px solid var(--border-color);
           color: var(--text-primary);
+          font-size: 0.9rem;
+          transition: border-color 0.2s;
+        }
+        .edit-input:focus {
+          border-color: var(--accent-indigo);
+          outline: none;
+        }
+        .edit-select {
+          width: 100%;
+          max-width: 450px;
+          padding: 10px 14px;
+          border-radius: 8px;
+          background: var(--bg-dark);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          font-size: 0.9rem;
+          cursor: pointer;
+        }
+        .edit-select:focus {
+          border-color: var(--accent-indigo);
+          outline: none;
+        }
+        .form-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 12px;
+        }
+        .save-btn {
+          background: var(--accent-indigo);
+          border: none;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .save-btn:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+        .cancel-btn {
+          background: transparent;
+          border: 1px solid var(--border-color);
+          color: var(--text-secondary);
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .cancel-btn:hover {
+          border-color: var(--text-secondary);
+          background: rgba(255,255,255,0.02);
+        }
+        @media (max-width: 768px) {
+          .details-list {
+            grid-template-columns: 1fr;
+          }
+          .account-header {
+            flex-direction: column;
+            text-align: center;
+          }
+          .edit-profile-btn {
+            width: 100%;
+          }
+          .edit-input, .edit-select {
+            max-width: 100%;
+          }
         }
       `}</style>
     </div>

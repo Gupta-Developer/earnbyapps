@@ -299,7 +299,7 @@ export default function PartnerAssignedCampaigns() {
               <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '0.95rem', marginBottom: '8px' }}>
                   <span>Earning Action Payout</span>
-                  <span style={{ color: 'var(--accent-emerald)' }}>+${selectedCampaign.reward.toFixed(2)}</span>
+                  <span style={{ color: 'var(--accent-emerald)' }}>+${(selectedCampaign.reward || 0).toFixed(2)}</span>
                 </div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: 1.5 }}>
                   {selectedCampaign.longDescription || selectedCampaign.description}

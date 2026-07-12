@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     proof TEXT NOT NULL,
     proof_type VARCHAR(50) DEFAULT 'text', -- 'text', 'image', 'video'
     proof_url TEXT,
-    status VARCHAR(50) DEFAULT 'Pending', -- 'Pending', 'Approved', 'Rejected'
+    status VARCHAR(50) DEFAULT 'Pending', -- 'Pending', 'Paid', 'Rejected'
     verifier_email VARCHAR(255) NOT NULL, -- 'admin' or user's email
     verification_type VARCHAR(50) DEFAULT 'admin', -- 'admin' or 'creator'
     referral_slot_id VARCHAR(255),

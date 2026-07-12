@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     const approvedSubmissions = await sql`
       SELECT COUNT(*) as count 
       FROM submissions 
-      WHERE user_email = ${dbUser.email} AND status = 'Approved'
+      WHERE user_email = ${dbUser.email} AND status = 'Paid'
     `;
     const approvedCount = parseInt(approvedSubmissions[0]?.count || '0');
 

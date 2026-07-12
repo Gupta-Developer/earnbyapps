@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
-import { countries } from '../../../data/countries';
+import { countries, getCountryCurrency } from '../../../data/countries';
 
 const COUNTRY_CURRENCIES: Record<string, { currency: string; symbol: string }> = {
   'Global': { currency: 'USD', symbol: '$' },
@@ -37,12 +37,7 @@ export default function AdminNewCampaign() {
   const [success, setSuccess] = useState(false);
 
   const getCurrencyDetails = (countryName: string) => {
-    if (COUNTRY_CURRENCIES[countryName]) {
-      return COUNTRY_CURRENCIES[countryName];
-    }
-    if (countryName === 'India') return { currency: 'INR', symbol: '₹' };
-    if (countryName === 'United Kingdom') return { currency: 'GBP', symbol: '£' };
-    return { currency: 'USD', symbol: '$' };
+    return getCountryCurrency(countryName);
   };
 
   const handleTogglePlatform = (plat: 'iOS' | 'Android' | 'Web') => {
@@ -381,7 +376,7 @@ export default function AdminNewCampaign() {
           <div className="form-group">
             <label>Platform *</label>
             <div style={{ display: 'flex', gap: '10px' }}>
-              {['iOS', 'Android', 'Web'].map(plat => (
+              {['iOS', 'Android'].map(plat => (
                 <button
                   type="button"
                   key={plat}

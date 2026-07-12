@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { getCategoryIcon, EarningApp } from '../../../data/apps';
-import { countries } from '../../../data/countries';
+import { countries, getCountryCurrency } from '../../../data/countries';
 
 const COUNTRY_CURRENCIES: Record<string, { currency: string; symbol: string }> = {
   'Global': { currency: 'USD', symbol: '$' },
@@ -108,12 +108,7 @@ export default function AdminAllCampaigns() {
   };
 
   const getCurrencyDetails = (countryName: string) => {
-    if (COUNTRY_CURRENCIES[countryName]) {
-      return COUNTRY_CURRENCIES[countryName];
-    }
-    if (countryName === 'India') return { currency: 'INR', symbol: '₹' };
-    if (countryName === 'United Kingdom') return { currency: 'GBP', symbol: '£' };
-    return { currency: 'USD', symbol: '$' };
+    return getCountryCurrency(countryName);
   };
 
   const handleTogglePlatform = (plat: 'iOS' | 'Android' | 'Web') => {
@@ -261,7 +256,7 @@ export default function AdminAllCampaigns() {
             <tbody>
               {dbApps.map((app) => {
                 const isDeactivated = app.isActive === false;
-                const completedCount = submissions.filter(s => s.appId === app.id && s.status === 'Approved').length;
+                const completedCount = submissions.filter(s => s.appId === app.id && s.status === 'Paid').length;
                 const target = app.targetCompletions || 1000;
                 const progressPercentage = Math.min(100, (completedCount / target) * 100);
                 const matchedCountryObj = countries.find(c => c.name === app.targetCountry);

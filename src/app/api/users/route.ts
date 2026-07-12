@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       const submissionCountRes = await sql`
         SELECT COUNT(*) as count 
         FROM submissions 
-        WHERE user_email = ${u.email} AND status = 'Approved'
+        WHERE user_email = ${u.email} AND status = 'Paid'
       `;
       const tasksDoneCount = parseInt(submissionCountRes[0]?.count || '0');
 
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
         LEFT JOIN (
           SELECT user_email, COUNT(*) as count 
           FROM submissions 
-          WHERE status = 'Approved'
+          WHERE status = 'Paid'
           GROUP BY user_email
         ) sub ON u.email = sub.user_email
         WHERE (
@@ -120,7 +120,7 @@ export async function GET(request: Request) {
         LEFT JOIN (
           SELECT user_email, COUNT(*) as count 
           FROM submissions 
-          WHERE status = 'Approved'
+          WHERE status = 'Paid'
           GROUP BY user_email
         ) sub ON u.email = sub.user_email
         WHERE u.country = ${country} AND (

@@ -149,10 +149,10 @@ export default function SubmissionsPage() {
                       fontWeight: 'bold',
                       background: 
                         sub.status === 'Pending' ? 'rgba(245,158,11,0.12)' : 
-                        sub.status === 'Approved' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                        sub.status === 'Paid' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
                       color: 
                         sub.status === 'Pending' ? '#f59e0b' : 
-                        sub.status === 'Approved' ? 'var(--accent-emerald)' : '#ef4444'
+                        sub.status === 'Paid' ? 'var(--accent-emerald)' : '#ef4444'
                     }}>{sub.status}</span>
                   </div>
                 </div>
@@ -182,10 +182,10 @@ export default function SubmissionsPage() {
                 letterSpacing: '0.05em',
                 background: 
                   selectedSub.status === 'Pending' ? 'rgba(245,158,11,0.12)' : 
-                  selectedSub.status === 'Approved' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                  selectedSub.status === 'Paid' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
                 color: 
                   selectedSub.status === 'Pending' ? '#f59e0b' : 
-                  selectedSub.status === 'Approved' ? 'var(--accent-emerald)' : '#ef4444'
+                  selectedSub.status === 'Paid' ? 'var(--accent-emerald)' : '#ef4444'
               }}>{selectedSub.status}</span>
             </div>
 

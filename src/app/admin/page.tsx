@@ -70,7 +70,7 @@ export default function AdminOverview() {
     if (!submissions || submissions.length === 0) return [];
     return submissions.slice(0, 5).map(sub => {
       let emoji = '⚡';
-      if (sub.status === 'Approved') emoji = '✅';
+      if (sub.status === 'Paid') emoji = '✅';
       else if (sub.status === 'Rejected') emoji = '❌';
       else if (sub.status === 'Pending') emoji = '⏳';
 
@@ -127,8 +127,8 @@ export default function AdminOverview() {
                         padding: '1px 5px', 
                         borderRadius: '3px', 
                         fontWeight: 'bold',
-                        background: act.status === 'Pending' ? 'rgba(245,158,11,0.12)' : act.status === 'Approved' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-                        color: act.status === 'Pending' ? '#f59e0b' : act.status === 'Approved' ? 'var(--accent-emerald)' : '#ef4444'
+                        background: act.status === 'Pending' ? 'rgba(245,158,11,0.12)' : act.status === 'Paid' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                        color: act.status === 'Pending' ? '#f59e0b' : act.status === 'Paid' ? 'var(--accent-emerald)' : '#ef4444'
                       }}>{act.status}</span>
                     </div>
                   </div>

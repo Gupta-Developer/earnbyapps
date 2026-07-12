@@ -73,7 +73,7 @@ export async function GET(request: Request) {
         proof: r.proof,
         proofType: r.proof_type as 'image' | 'video' | 'text',
         proofUrl: r.proof_url || undefined,
-        status: r.status as 'Pending' | 'Approved' | 'Rejected',
+        status: r.status as 'Pending' | 'Paid' | 'Rejected',
         time: timeStr,
         verifierEmail: r.verifier_email,
         verificationType: r.verification_type as 'admin' | 'creator',

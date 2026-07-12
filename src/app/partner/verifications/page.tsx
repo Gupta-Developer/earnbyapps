@@ -132,8 +132,8 @@ export default function PartnerVerifications() {
                       borderRadius: '4px',
                       fontSize: '0.72rem',
                       fontWeight: 'bold',
-                      background: sub.status === 'Pending' ? 'rgba(245,158,11,0.1)' : sub.status === 'Approved' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                      color: sub.status === 'Pending' ? '#f59e0b' : sub.status === 'Approved' ? 'var(--accent-emerald)' : '#ef4444'
+                      background: sub.status === 'Pending' ? 'rgba(245,158,11,0.1)' : sub.status === 'Paid' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                      color: sub.status === 'Pending' ? '#f59e0b' : sub.status === 'Paid' ? 'var(--accent-emerald)' : '#ef4444'
                     }}>
                       {sub.status}
                     </span>

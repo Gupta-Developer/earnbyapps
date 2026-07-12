@@ -26,14 +26,55 @@ async function ensureSubmissionsTable() {
   } catch (migErr) {
     console.warn("Migration warning for submissions column origin_app_id:", migErr);
   }
+  
+  // Migration: Update existing 'Approved' submissions to 'Paid'
+  try {
+    await sql`UPDATE submissions SET status = 'Paid' WHERE status = 'Approved'`;
+  } catch (migErr) {
+    console.warn("Migration warning for updating Approved to Paid status:", migErr);
+  }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await ensureSubmissionsTable();
-    const rows = await sql`SELECT * FROM submissions ORDER BY created_at DESC`;
-    
-    const formatted = rows.map(r => {
+    const { searchParams } = new URL(req.url);
+    const appId = searchParams.get('appId');
+    const userEmail = searchParams.get('userEmail');
+    const originAppId = searchParams.get('originAppId');
+
+    let rows;
+    if (appId && userEmail) {
+      rows = await sql`
+        SELECT * FROM submissions 
+        WHERE app_id = ${appId} AND user_email = ${userEmail}
+        ORDER BY created_at DESC
+      `;
+    } else if (userEmail) {
+      rows = await sql`
+        SELECT * FROM submissions 
+        WHERE user_email = ${userEmail}
+        ORDER BY created_at DESC
+      `;
+    } else if (appId) {
+      rows = await sql`
+        SELECT * FROM submissions 
+        WHERE app_id = ${appId}
+        ORDER BY created_at DESC
+      `;
+    } else {
+      rows = await sql`
+        SELECT * FROM submissions 
+        ORDER BY created_at DESC
+      `;
+    }
+
+    // Filter by origin_app_id if specified (handling NULL / default cases)
+    if (originAppId) {
+      rows = rows.filter(r => (r.origin_app_id || 'main') === originAppId);
+    }
+
+    const formatted = rows.map((r: any) => {
       let timeStr = 'Just now';
       if (r.created_at) {
         try {
@@ -62,7 +103,7 @@ export async function GET() {
         proof: r.proof,
         proofType: r.proof_type as 'image' | 'video' | 'text',
         proofUrl: r.proof_url || undefined,
-        status: r.status as 'Pending' | 'Approved' | 'Rejected',
+        status: r.status as 'Pending' | 'Paid' | 'Rejected',
         time: timeStr,
         verifierEmail: r.verifier_email,
         verificationType: r.verification_type as 'admin' | 'creator',
@@ -138,14 +179,14 @@ export async function PUT(req: Request) {
       const oldStatus = sub.status;
       const rewardVal = parseFloat(sub.reward);
 
-      if (status === 'Approved' && oldStatus !== 'Approved') {
+      if (status === 'Paid' && oldStatus !== 'Paid') {
         // Add to user balance
         await sql`
           UPDATE users
           SET balance = balance + ${rewardVal}
           WHERE email = ${sub.user_email}
         `;
-      } else if (status !== 'Approved' && oldStatus === 'Approved') {
+      } else if (status !== 'Paid' && oldStatus === 'Paid') {
         // Subtract from user balance
         await sql`
           UPDATE users
