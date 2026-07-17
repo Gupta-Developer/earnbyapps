@@ -50,14 +50,7 @@ export async function GET(request: Request) {
         try {
           const d = new Date(r.created_at);
           if (!isNaN(d.getTime())) {
-            timeStr = d.toLocaleString('en-US', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            });
+            timeStr = d.toISOString();
           }
         } catch (e) {
           // fallback

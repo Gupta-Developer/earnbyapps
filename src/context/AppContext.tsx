@@ -173,16 +173,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       setUserRole((session.user as any).role || 'user');
     } else {
       // Clear profile when Google session is signed out
-      const defaultProfile: UserProfile = {
-        fullName: 'Normal User',
-        email: 'user@example.com',
-        phone: '9876543210',
-        gender: 'Male',
-        country: 'India',
-        paymentMethod: 'UPI ID',
-        paymentDetails: 'user@bank'
-      };
-      setUserProfile(defaultProfile);
+      setUserProfile(null);
       setUserRole('user');
     }
   }, [session]);
@@ -211,16 +202,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       if (storedProfile) {
         setUserProfile(JSON.parse(storedProfile));
       } else {
-        const defaultProfile: UserProfile = {
-          fullName: 'Normal User',
-          email: 'user@example.com',
-          phone: '9876543210',
-          gender: 'Male',
-          country: 'India',
-          paymentMethod: 'UPI ID',
-          paymentDetails: 'user@bank'
-        };
-        setUserProfile(defaultProfile);
+        setUserProfile(null);
       }
 
       if (storedTheme) {
