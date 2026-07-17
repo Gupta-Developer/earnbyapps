@@ -25,6 +25,69 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
     localStorage.setItem('partner-sidebar-collapsed', String(newVal));
   };
 
+  const isLoggedIn = !!session || !!userProfile;
+
+  if (!isLoggedIn) {
+    return (
+      <main className="partner-denied-container">
+        <div className="glass-card restriction-card">
+          <span className="restriction-icon">🔒</span>
+          <h2>Access Denied</h2>
+          <p>Please log in to access the partner portal.</p>
+          <Link 
+            href="/login" 
+            style={{
+              marginTop: '20px',
+              padding: '8px 16px',
+              background: 'var(--primary-color, #4f46e5)',
+              color: '#fff',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: 'bold'
+            }}
+          >
+            Go to Login
+          </Link>
+        </div>
+        <style>{`
+          .partner-denied-container {
+            max-width: 800px;
+            margin: 80px auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: center;
+          }
+          .restriction-card {
+            padding: 48px;
+            text-align: center;
+            max-width: 500px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+          .restriction-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 20px;
+          }
+          .restriction-card h2 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+          }
+          .restriction-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+          }
+        `}</style>
+      </main>
+    );
+  }
+
   if (userRole !== 'user') {
     return (
       <main className="partner-denied-container">
