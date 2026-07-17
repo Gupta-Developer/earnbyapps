@@ -7,12 +7,15 @@ import { useSearchParams } from 'next/navigation';
 function MobileAuthComponent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '';
+  const token = searchParams.get('token') || '';
 
   useEffect(() => {
-    if (callbackUrl) {
+    if (token) {
+      signIn('credentials', { token, callbackUrl: callbackUrl || '/partner/create-campaign' });
+    } else if (callbackUrl) {
       signIn('google', { callbackUrl });
     }
-  }, [callbackUrl]);
+  }, [token, callbackUrl]);
 
   return (
     <div style={{

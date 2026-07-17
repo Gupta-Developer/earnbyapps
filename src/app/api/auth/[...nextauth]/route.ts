@@ -14,9 +14,32 @@ export const authOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        token: { label: "Token", type: "text" }
       },
       async authorize(credentials) {
+        if (credentials?.token) {
+          const { verifyToken } = require("../../../../lib/jwt");
+          const decoded = verifyToken(credentials.token);
+          if (decoded && decoded.id) {
+            const users = await sql`SELECT * FROM users WHERE id = ${decoded.id}`;
+            if (users.length > 0) {
+              const user = users[0];
+              if (user.is_blocked) {
+                throw new Error("Your account has been blocked. Please contact support.");
+              }
+              return {
+                id: String(user.id),
+                email: user.email,
+                name: user.full_name,
+                role: user.role,
+                balance: Number(user.balance || 0.00)
+              };
+            }
+          }
+          throw new Error("Invalid or expired session token");
+        }
+
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please enter both email and password");
         }
