@@ -478,7 +478,54 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   };
 
   const updateLeadStatus = (id: string, status: PartnershipLead['status']) => {
-    setPartnershipLeads(prev => prev.map(lead => lead.id === id ? { ...lead, status } : lead));
+    setPartnershipLeads(prev => {
+      const nextLeads = prev.map(lead => lead.id === id ? { ...lead, status } : lead);
+      
+      // If converted, automatically create a campaign in apps!
+      if (status === 'Converted') {
+        const lead = prev.find(l => l.id === id);
+        if (lead) {
+          // Check if already in apps to avoid duplicates
+          setApps(currentApps => {
+            if (currentApps.some(app => app.id === `lead-app-${lead.id}`)) return currentApps;
+            const newCampaign: EarningApp = {
+              id: `lead-app-${lead.id}`,
+              name: lead.appName,
+              category: lead.category,
+              platforms: lead.platforms,
+              earningRate: lead.earningRate,
+              averageEarningsPerDay: lead.averageEarningsPerDay,
+              difficulty: 'Easy',
+              rating: 5.0,
+              reviewsCount: 1,
+              description: lead.description,
+              longDescription: lead.longDescription,
+              tags: lead.tags,
+              actionText: lead.actionText,
+              externalUrl: lead.externalUrl,
+              targetCountry: lead.targetCountry,
+              currency: lead.currency,
+              currencySymbol: lead.currencySymbol,
+              targetCompletions: lead.targetCompletions,
+              reward: lead.averageEarningsPerDay,
+              assignedEmail: lead.partnerEmail,
+              isActive: true,
+              referralCode: lead.referralCode
+            };
+            
+            // Post to backend database
+            fetch('/api/campaigns', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newCampaign)
+            }).catch(e => console.error("Error creating campaign from lead:", e));
+
+            return [...currentApps, newCampaign];
+          });
+        }
+      }
+      return nextLeads;
+    });
   };
 
   const claimTask = (taskId: string, reward: number) => {
@@ -548,6 +595,9 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
 
     if (activeAssignment) {
       verifierEmail = activeAssignment.userEmail;
+      verificationType = 'creator';
+    } else if (targetApp.assignedEmail) {
+      verifierEmail = targetApp.assignedEmail;
       verificationType = 'creator';
     } else if (targetApp.referralPool && targetApp.referralPool.length > 0) {
       // Check referral pool next

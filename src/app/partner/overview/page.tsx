@@ -4,27 +4,30 @@ import React, { useMemo } from 'react';
 import { useApp } from '../../../context/AppContext';
 
 export default function PartnerOverview() {
-  const { partnershipLeads, apps } = useApp();
+  const { partnershipLeads, apps, submissions, userProfile } = useApp();
+
+  const partnerEmail = userProfile?.email || '';
 
   // 1. Total Campaigns (total campaign leads submitted by the partner)
-  const totalCampaignsCount = partnershipLeads.length;
+  const totalCampaignsCount = useMemo(() => {
+    return partnershipLeads.filter(lead => lead.partnerEmail?.toLowerCase() === partnerEmail.toLowerCase()).length;
+  }, [partnershipLeads, partnerEmail]);
 
-  // 2. Assigned Campaigns (mockAssigned + custom approved campaigns)
-  const mockAssigned = useMemo(() => [
-    { targetCompletions: 3000, completedCompletions: 1840 },
-    { targetCompletions: 5000, completedCompletions: 2150 }
-  ], []);
-
-  const liveCustom = useMemo(() => {
+  // 2. Assigned Campaigns (real approved campaigns assigned to this partner)
+  const allAssigned = useMemo(() => {
     return apps
-      .filter(app => app.id.startsWith('custom-'))
-      .map(app => ({
-        targetCompletions: 1000,
-        completedCompletions: Math.floor(1000 * 0.18) // mock 18% progress
-      }));
-  }, [apps]);
+      .filter(app => app.assignedEmail && app.assignedEmail.toLowerCase() === partnerEmail.toLowerCase())
+      .map(app => {
+        const campSubmissions = submissions.filter(sub => sub.appId === app.id);
+        const completedCompletions = campSubmissions.filter(sub => sub.status === 'Paid').length;
+        const target = app.targetCompletions || 1000;
+        return {
+          targetCompletions: target,
+          completedCompletions: completedCompletions
+        };
+      });
+  }, [apps, partnerEmail, submissions]);
 
-  const allAssigned = useMemo(() => [...liveCustom, ...mockAssigned], [liveCustom, mockAssigned]);
   const assignedCampaignsCount = allAssigned.length;
 
   // 3. Completion rate = sum of completedCompletions / sum of targetCompletions

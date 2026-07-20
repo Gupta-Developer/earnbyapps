@@ -11,7 +11,15 @@ function MobileAuthComponent() {
 
   useEffect(() => {
     if (token) {
-      signIn('credentials', { token, callbackUrl: callbackUrl || '/partner/create-campaign' });
+      signIn('credentials', { 
+        token, 
+        callbackUrl: callbackUrl || '/partner/create-campaign',
+        redirect: false
+      }).then((res) => {
+        if (res?.url) {
+          window.location.href = res.url;
+        }
+      });
     } else if (callbackUrl) {
       signIn('google', { callbackUrl });
     }
@@ -27,7 +35,7 @@ function MobileAuthComponent() {
       color: '#fff',
       fontFamily: 'sans-serif'
     }}>
-      Redirecting to Google Sign-In...
+      {token ? "Logging you in securely..." : "Redirecting to Google Sign-In..."}
     </div>
   );
 }

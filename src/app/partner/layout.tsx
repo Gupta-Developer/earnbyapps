@@ -137,8 +137,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
 
   const sidebarItems = [
     { id: 'overview', href: '/partner/overview', label: 'Overview', icon: '🏠' },
-    { id: 'my-tasks', href: '/partner/my-tasks', label: 'My Campaigns', icon: '📋' },
-    { id: 'assigned-campaigns', href: '/partner/assigned-campaigns', label: 'Assigned Campaigns', icon: '🎯' },
+    { id: 'campaigns', href: '/partner/campaigns', label: 'My Campaigns', icon: '📋' },
     { id: 'verifications', href: '/partner/verifications', label: 'Verify Submissions', icon: '✅' },
     { id: 'create-campaign', href: '/partner/create-campaign', label: 'Create Campaign', icon: '➕' },
     { id: 'platforms', href: '/partner/platforms', label: 'Platforms', icon: '📱' },
@@ -148,8 +147,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
 
   const activeTitle = 
     pathname.includes('/create-campaign') ? 'Create Campaign' : 
-    pathname.includes('/my-tasks') ? 'My Campaigns' : 
-    pathname.includes('/assigned-campaigns') ? 'Assigned Campaigns' :
+    pathname.includes('/campaigns') ? 'My Campaigns' : 
     pathname.includes('/verifications') ? 'Verify Submissions' : 
     pathname.includes('/platforms') ? 'Platforms' : 
     pathname.includes('/account') ? 'My Account' :
